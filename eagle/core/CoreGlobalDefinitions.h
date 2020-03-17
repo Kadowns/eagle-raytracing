@@ -2,8 +2,8 @@
 // Created by Novak on 05/05/2019.
 //
 
-#ifndef EAGLE_GLOBALDEFINITIONS_H
-#define EAGLE_GLOBALDEFINITIONS_H
+#ifndef EAGLE_COREGLOBALDEFINITIONS_H
+#define EAGLE_COREGLOBALDEFINITIONS_H
 
 #include <memory>
 #include <vector>
@@ -78,4 +78,4 @@ private:
 
 EG_END
 
-#endif //EAGLE_GLOBALDEFINITIONS_H
+#endif //EAGLE_COREGLOBALDEFINITIONS_H

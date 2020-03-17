@@ -6,7 +6,7 @@
 #define EAGLE_RENDERINGCORE_H
 
 #include "eagle/core/Log.h"
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 
 EG_BEGIN
 

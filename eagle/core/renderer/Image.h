@@ -5,7 +5,7 @@
 #ifndef EAGLE_IMAGE_H
 #define EAGLE_IMAGE_H
 
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 #include "DescriptorItem.h"
 
 

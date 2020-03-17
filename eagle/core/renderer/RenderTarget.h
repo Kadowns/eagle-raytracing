@@ -5,7 +5,7 @@
 #ifndef EAGLE_RENDERTARGET_H
 #define EAGLE_RENDERTARGET_H
 
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 #include "Image.h"
 
 EG_BEGIN

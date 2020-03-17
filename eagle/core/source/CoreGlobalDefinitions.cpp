@@ -2,7 +2,7 @@
 // Created by Novak on 12/05/2019.
 //
 
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 EG_BEGIN
 
 std::map<EAGLE_KEY, std::string> EagleInfo::m_infoMap;

@@ -5,10 +5,7 @@
 #ifndef EAGLE_EAGLE_H
 #define EAGLE_EAGLE_H
 
-
 #include <eagle/core/Core.h>
-#include <eagle/engine/Engine.h>
-#include <eagle/editor/Editor.h>
-
+#include <eagle/raytracer/Raytracer.h>
 
 #endif //EAGLE_EAGLE_H

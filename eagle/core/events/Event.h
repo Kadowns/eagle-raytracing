@@ -11,7 +11,7 @@
 #include <map>
 #include <typeindex>
 
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 
 EG_BEGIN
 

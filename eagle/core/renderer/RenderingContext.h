@@ -5,7 +5,7 @@
 #ifndef EAGLE_RENDERINGCONTEXT_H
 #define EAGLE_RENDERINGCONTEXT_H
 
-#include "eagle/core/GlobalDefinitions.h"
+#include "eagle/core/CoreGlobalDefinitions.h"
 #include "RenderingCore.h"
 #include "Shader.h"
 #include "VertexBuffer.h"

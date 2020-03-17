@@ -70,26 +70,6 @@ void Application::run() {
 
 }
 
-void Application::layer_emplace_back(Reference<Layer> layer) {
-    m_layerStack.emplace_back(layer);
-}
-
-void Application::layer_emplace_front(Reference<Layer> layer) {
-    m_layerStack.emplace_front(layer);
-}
-
-void Application::layer_pop(Reference<Layer> layer) {
-    m_layerStack.pop_layer(layer);
-}
-
-void Application::layer_emplace(std::vector<Reference<Layer>> layers) {
-    m_layerStack.emplace(layers);
-}
-
-void Application::event_emplace_back(Reference<Event> e) {
-    m_eventQueue.emplace(e);
-}
-
 void Application::quit() {
     m_quit = true;
 }
