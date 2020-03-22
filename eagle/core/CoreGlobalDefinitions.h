@@ -11,6 +11,10 @@
 #include <unordered_map>
 #include <set>
 
+#include <functional>
+#include <utility>
+#include <typeindex>
+
 #define EG_BEGIN namespace Eagle {
 #define EG_END   }
 

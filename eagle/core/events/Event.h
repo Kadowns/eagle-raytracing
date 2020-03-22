@@ -6,11 +6,6 @@
 
 #define EAGLE_EVENT_H
 
-#include <functional>
-#include <utility>
-#include <map>
-#include <typeindex>
-
 #include "eagle/core/CoreGlobalDefinitions.h"
 
 EG_BEGIN

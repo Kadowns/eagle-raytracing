@@ -1147,10 +1147,6 @@ bool VulkanContext::prepare_frame() {
         throw std::runtime_error("failed to acquire swapchain image!");
     }
 
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
     m_present.commandBuffer = m_commandBuffers[m_present.imageIndex];
 
     //updates dirty buffers-------------------------

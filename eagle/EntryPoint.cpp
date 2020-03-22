@@ -8,7 +8,8 @@ Eagle::ApplicationCreateInfo create_application_info() {
     config.appName = "Dummy";
     config.windowType = new Eagle::WindowGLFW(1080, 720);
     config.layers.push_back(std::make_shared<Eagle::InputLayer>());
-    config.layers.push_back(std::make_shared<Eagle::Raytracer::RaytracerLayer>());
+    config.layers.push_back(std::make_shared<Eagle::Raytracer::EditorLayer>());
+    config.layers.push_back(std::make_shared<Eagle::Raytracer::RenderLayer>());
     config.coreLogLevel = Eagle::Log::DEBUG;
     config.clientLogLevel = Eagle::Log::TRACE;
     return config;

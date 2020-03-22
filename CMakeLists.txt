@@ -12,6 +12,7 @@ set(EG_EXTERNAL_PATH ${EG_ROOT_PATH}/external)
 option(BUILD_EG_ENGINE "Build eagle engine library" ON)
 option(BUILD_EG_EDITOR "Build eagle editor executable (requires engine)" ON)
 
+add_definitions(-DPROJECT_ROOT="${EG_ROOT_PATH}/data")
 if(MSVC)
 add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
 endif(MSVC)
@@ -37,7 +38,7 @@ set(CORE_INCLUDE
         eagle/core/events/InputEvents.h
         eagle/core/events/KeyCodes.h
         eagle/core/InputLayer.h
-        )
+        eagle/core/events/ImmediateEvent.h)
 
 set(CORE_SOURCE
         eagle/core/source/CoreGlobalDefinitions.cpp
@@ -141,14 +142,25 @@ define_file_basename_for_sources(eagle_core)
 target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent OGLCompiler HLSL SPIRV)
 
 #raytracer-------------------------------------------------
+
+add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
+add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
+
 set(RAYTRACER_INCLUDE
         eagle/raytracer/RaytracerGlobalDefinitions.h
-        eagle/raytracer/RaytracerLayer.h
-        eagle/raytracer/Raytracer.h)
+        eagle/raytracer/RenderLayer.h
+        eagle/raytracer/Raytracer.h
+        eagle/raytracer/editor/EditorMaster.h
+        eagle/raytracer/editor/EditorLayer.h
+        eagle/raytracer/editor/EditorWindow.h
+        eagle/raytracer/editor/FooWindow.h)
 
 set(RAYTRACER_SOURCE
-        eagle/raytracer/source/RaytracerLayer.cpp
-        )
+        eagle/raytracer/source/RenderLayer.cpp
+        eagle/raytracer/source/editor/EditorLayer.cpp
+        eagle/raytracer/source/editor/EditorMaster.cpp
+        eagle/raytracer/source/editor/EditorWindow.cpp
+        eagle/raytracer/source/editor/FooWindow.cpp)
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 
@@ -169,11 +181,12 @@ set_target_properties(
 
 define_file_basename_for_sources(eagle_raytracer)
 
-target_link_libraries(eagle_raytracer eagle_core)
+target_link_libraries(eagle_raytracer eagle_core imgui glm)
 #-----------------------------------------------------
 
 add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h)
 
 define_file_basename_for_sources(eagle)
+
 
 target_link_libraries(eagle eagle_raytracer)
