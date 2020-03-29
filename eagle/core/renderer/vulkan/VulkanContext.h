@@ -23,6 +23,8 @@
 #include "VulkanRenderTarget.h"
 #include "VulkanCommand.h"
 #include "VulkanCommandList.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanComputeShader.h"
 
 EG_BEGIN
 
@@ -43,9 +45,10 @@ protected:
 
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> computeFamily;
 
         bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
+            return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
         }
     };
 
@@ -66,9 +69,11 @@ public:
     virtual void deinit() override;
     virtual void handle_window_resized(int width, int height) override;
     virtual bool prepare_frame() override;
-    virtual Scope <Eagle::CommandBuffer> create_command_buffer() override;
+    virtual Reference <Eagle::CommandBuffer> create_command_buffer() override;
     virtual const Reference <Eagle::RenderTarget> main_render_target() override;
-    virtual void submit_command_buffer(Scope <Eagle::CommandBuffer> &commandBuffer) override;
+
+    virtual void set_recreation_callback(std::function<void()> recreation_callback) override;
+
     virtual void present_frame() override;
     //------
 
@@ -109,13 +114,14 @@ protected:
 
     virtual void create_offscreen_render_pass();
 
-    virtual void create_framebuffers();
-
     virtual void recreate_swapchain();
 
     virtual void cleanup_swapchain();
 
     bool validation_layers_supported();
+
+
+protected:
 
     std::vector<const char *> get_required_extensions();
 
@@ -165,6 +171,15 @@ public:
     virtual Handle<RenderTarget>
     create_render_target(const std::vector<RENDER_TARGET_ATTACHMENT> &attachments) override;
 
+    virtual Handle<ComputeShader>
+    create_compute_shader(const std::string& path) override;
+
+    virtual void destroy_texture_2d(const Reference<Texture2D> &texture) override;
+
+private:
+
+    void submit_command_buffer(VkCommandBuffer& commandBuffer);
+
 
 protected:
 
@@ -179,7 +194,7 @@ protected:
     VkQueue m_graphicsQueue;
 
     struct {
-        uint32_t imageIndex;
+        uint32_t imageIndex = 0;
         uint32_t imageCount;
         VulkanImageAttachment depth;
         VkFormat swapchainFormat;
@@ -187,17 +202,18 @@ protected:
         VkSwapchainKHR swapchain;
         VkRenderPass renderPass, offscreenPass;
         std::vector<Reference<VulkanMainRenderTarget>> renderTargets;
-        VkCommandBuffer commandBuffer;
     } m_present;
 
-    VkCommandPool m_commandPool;
-    std::vector<VkCommandBuffer> m_commandBuffers;
+    VkCommandPool m_graphicsCommandPool, m_computeCommandPool;
+    std::vector<Reference<VulkanCommandBuffer>> m_commandBuffers;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
     VkQueue m_presentQueue;
 
-    VulkanCleaner m_cleaner;
+
+    //compute
+    VkQueue m_computeQueue;
 
     std::vector<Reference<VulkanVertexBuffer>> m_vertexBuffers;
     std::vector<Reference<VulkanIndexBuffer>> m_indexBuffers;
@@ -205,12 +221,14 @@ protected:
     std::vector<Reference<VulkanDescriptorSet>> m_descriptorSets;
     std::vector<Reference<VulkanDescriptorSetLayout>> m_descriptorSetsLayouts;
     std::vector<Reference<VulkanShader>> m_shaders;
+    std::vector<Reference<VulkanComputeShader>> m_computeShaders;
     std::vector<Reference<VulkanTexture2D>> m_textures;
     std::vector<Reference<VulkanCustomRenderTarget>> m_renderTargets;
 
     uint32_t m_currentFrame = 0;
 
     bool m_windowResized = false;
+    std::function<void()> recreation_callback;
 
     const std::vector<const char *> validationLayers = {
             "VK_LAYER_LUNARG_standard_validation"

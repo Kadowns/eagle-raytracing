@@ -7,6 +7,7 @@
 
 #include "RenderingCore.h"
 #include "Shader.h"
+#include "ComputeShader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "UniformBuffer.h"
@@ -20,12 +21,17 @@ public:
 
     virtual ~CommandBuffer() = default;
 
+    virtual void begin() = 0;
+
     virtual void finish() = 0;
 
     virtual bool is_finished() = 0;
 
     virtual void
     bind_shader(const Reference<Shader> &shader) = 0;
+
+    virtual void
+    bind_compute_shader(const Reference<ComputeShader>& shader) = 0;
 
     virtual void
     draw(uint32_t vertexCount) = 0;
@@ -47,6 +53,10 @@ public:
                          uint32_t setIndex) = 0;
 
     virtual void
+    bind_descriptor_sets(const Reference<ComputeShader> &shader, const Reference<DescriptorSet> &descriptorSet,
+                                      uint32_t setIndex) = 0;
+
+    virtual void
     set_viewport(float w, float h, float x, float y, float minDepth, float maxDepth) = 0;
 
     virtual void
@@ -57,6 +67,15 @@ public:
 
     virtual void
     begin_render_pass(const Reference<RenderTarget> &renderTarget) = 0;
+
+    virtual void
+    pipeline_barrier(const Reference <ImageAttachment> &image, ShaderStage srcStage,
+                     ShaderStage dstStage) = 0;
+
+    virtual void
+    dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
+
+    virtual void submit() = 0;
 
 };
 

@@ -5,12 +5,16 @@ EG_BEGIN
 
 VulkanDescriptorSet::VulkanDescriptorSet(const Reference<VulkanDescriptorSetLayout> &descriptorSetLayout,
                                          const std::vector<Reference<DescriptorItem>> &descriptorItems,
-                                         VulkanCleaner& cleaner,
-                                         VulkanDescriptorSetCreateInfo createInfo) :
-    VulkanCleanable(cleaner),
+                                         const VulkanDescriptorSetCreateInfo& createInfo) :
     m_descriptorSetLayout(descriptorSetLayout), m_descriptorItems(descriptorItems), m_info(createInfo){
     create_descriptor_sets();
     update_descriptor_sets();
+}
+
+VulkanDescriptorSet::VulkanDescriptorSet(const Reference<VulkanDescriptorSetLayout> &descriptorSetLayout,
+                                         const VulkanDescriptorSetCreateInfo &createInfo) :
+    m_descriptorSetLayout(descriptorSetLayout), m_info(createInfo){
+    create_descriptor_sets();
 }
 
 VulkanDescriptorSet::~VulkanDescriptorSet() {
@@ -63,7 +67,7 @@ void VulkanDescriptorSet::update(const std::vector<Reference<DescriptorItem>> &d
     for (uint32_t i = 0; i < m_descriptorSets.size(); i++){
         m_dirtyDescriptors.insert(i);
     }
-    m_cleaner.push(this);
+    VulkanCleaner::push(this);
 }
 
 bool VulkanDescriptorSet::is_dirty() const {
@@ -90,7 +94,7 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 bufferInfos.push_back(bufferInfo);
                 break;
             }
-            case DescriptorType::IMAGE_2D:{
+            case DescriptorType::SAMPLED_IMAGE_2D:{
                 auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
                 VkDescriptorImageInfo imageInfo = {};
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -98,6 +102,14 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 imageInfo.sampler = std::static_pointer_cast<VulkanImageSampler>(image->get_sampler().lock())->sampler;
                 imageInfos.push_back(imageInfo);
                 break;
+            }
+            case DescriptorType::STORAGE_IMAGE_2D:{
+                auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
+                VkDescriptorImageInfo imageInfo = {};
+                imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+                imageInfo.imageView = std::static_pointer_cast<VulkanImageAttachment>(image->get_attachment().lock())->view;
+                imageInfo.sampler = std::static_pointer_cast<VulkanImageSampler>(image->get_sampler().lock())->sampler;
+                imageInfos.push_back(imageInfo);
             }
         }
     }
@@ -118,7 +130,8 @@ void VulkanDescriptorSet::flush(uint32_t index) {
             descriptorWrite[j].pBufferInfo = &bufferInfos[bufferIndex];
             bufferIndex++;
         }
-        else if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+        else if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+              || descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
             descriptorWrite[j].pImageInfo = &imageInfos[imageIndex];
             imageIndex++;
         }
@@ -145,6 +158,8 @@ void VulkanDescriptorSet::cleanup() {
     VK_CALL vkDestroyDescriptorPool(m_info.device, m_descriptorPool, nullptr);
     m_cleared = true;
 }
+
+
 
 EG_END
 

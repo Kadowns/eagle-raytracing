@@ -12,11 +12,7 @@ FooWindow::FooWindow(const std::string &name) : EditorWindow(name) {
 }
 
 void FooWindow::handle_window_update() {
-
-}
-
-void FooWindow::handle_update()  {
-    ImGui::ShowDemoWindow();
+    ImGui::Text("Hello world!");
 }
 
 EG_RAYTRACER_END

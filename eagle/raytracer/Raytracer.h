@@ -5,7 +5,7 @@
 #ifndef EAGLE_RAYTRACER_H
 #define EAGLE_RAYTRACER_H
 
-#include <eagle/raytracer/RenderLayer.h>
+#include <eagle/raytracer/renderer/RenderLayer.h>
 #include <eagle/raytracer/editor/EditorLayer.h>
 
 #endif //EAGLE_RAYTRACER_H

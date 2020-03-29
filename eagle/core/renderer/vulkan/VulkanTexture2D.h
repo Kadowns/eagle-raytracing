@@ -25,14 +25,16 @@ public:
                     const VulkanTexture2DCreateInfo &vulkanInfo);
     ~VulkanTexture2D();
 
-    virtual void upload_pixel_data() override;
+    virtual void apply() override;
 
     virtual Handle<Image> get_image() override;
 
 
 private:
 
-    void copy_buffer_to_image(Reference<VulkanBuffer> buffer, VkImage image, uint32_t width, uint32_t height);
+    Reference<VulkanBuffer> create_staging_buffer();
+
+    void copy_buffer_to_image(const Reference<VulkanBuffer>& buffer, VkImage image, uint32_t width, uint32_t height);
 
 private:
     VulkanTexture2DCreateInfo m_vulkanInfo;

@@ -5,32 +5,32 @@
 #include <eagle/raytracer/editor/EditorLayer.h>
 #include <eagle/raytracer/editor/FooWindow.h>
 
-#include <eagle/raytracer/RenderLayer.h>
+#include <eagle/raytracer/renderer/RenderLayer.h>
 
 EG_RAYTRACER_BEGIN
 
 EditorLayer::EditorLayer() {
-    handle_render_init_event_callback = [&](Reference<RenderingContext>& context){
+    handle_render_init_callback = [&](Reference<RenderingContext>& context){
         m_editorMaster.init(context);
     };
 
-    handle_render_deinit_event_callback = [&](Reference<RenderingContext>& context){
+    handle_render_deinit_callback = [&](){
         m_editorMaster.deinit();
     };
 
-    handle_render_event_callback = [&](Scope<CommandBuffer>& commandBuffer){
+    handle_render_draw_callback = [&](Reference<CommandBuffer>& commandBuffer){
         m_editorMaster.render(commandBuffer);
     };
 
-    RenderLayer::handle_render_init_event += &handle_render_init_event_callback;
-    RenderLayer::handle_render_deinit_event+= &handle_render_deinit_event_callback;
-    RenderLayer::handle_render_event += &handle_render_event_callback;
+    RenderMaster::handle_render_init += &handle_render_init_callback;
+    RenderMaster::handle_render_deinit += &handle_render_deinit_callback;
+    RenderMaster::handle_main_render_pass_draw += &handle_render_draw_callback;
 }
 
 EditorLayer::~EditorLayer() {
-    RenderLayer::handle_render_init_event -= &handle_render_init_event_callback;
-    RenderLayer::handle_render_deinit_event-= &handle_render_deinit_event_callback;
-    RenderLayer::handle_render_event -= &handle_render_event_callback;
+    RenderMaster::handle_render_init -= &handle_render_init_callback;
+    RenderMaster::handle_render_deinit -= &handle_render_deinit_callback;
+    RenderMaster::handle_main_render_pass_draw -= &handle_render_draw_callback;
 }
 
 void EditorLayer::handle_attach() {

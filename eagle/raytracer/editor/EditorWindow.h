@@ -21,7 +21,7 @@ public:
     inline bool is_focused() const { return m_isFocused; }
 
 protected:
-    const std::string& m_name;
+    std::string m_name;
 
 private:
     bool m_isHovered, m_isFocused;

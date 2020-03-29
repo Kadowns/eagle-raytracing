@@ -12,8 +12,6 @@ EG_RAYTRACER_BEGIN
 class FooWindow : public EditorWindow {
 public:
     FooWindow(const std::string &name);
-
-    virtual void handle_update() override;
     virtual void handle_window_update() override;
 };
 

@@ -6,14 +6,12 @@
 #define EAGLE_RENDERLAYER_H
 
 #include <eagle/raytracer/RaytracerGlobalDefinitions.h>
+#include <eagle/raytracer/renderer/RenderMaster.h>
 
 EG_RAYTRACER_BEGIN
 
 class RenderLayer : public Layer {
-public:
-    typedef ImmediateEvent<Reference<RenderingContext>&> RenderInitEvent;
-    typedef ImmediateEvent<Reference<RenderingContext>&> RenderDeinitEvent;
-    typedef ImmediateEvent<Scope<CommandBuffer>&> RenderEvent;
+
 public:
     virtual void handle_attach() override;
 
@@ -23,12 +21,8 @@ public:
 
     virtual void handle_event(Event &e) override;
 
-    static RenderEvent handle_render_event;
-    static RenderInitEvent handle_render_init_event;
-    static RenderDeinitEvent handle_render_deinit_event;
-
 private:
-    Reference<RenderingContext> m_context;
+    RenderMaster m_renderMaster;
     EventDispatcher m_dispatcher;
 };
 

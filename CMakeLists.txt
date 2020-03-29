@@ -70,6 +70,7 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/DescriptorItem.h
         eagle/core/renderer/DescriptorSetLayout.h
         eagle/core/renderer/CommandBuffer.h
+        eagle/core/renderer/ComputeShader.h
         eagle/core/renderer/vulkan/VulkanContext.h
         eagle/core/renderer/vulkan/VulkanCore.h
         eagle/core/renderer/vulkan/VulkanHelper.h
@@ -90,10 +91,11 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanCommandBuffer.h
         eagle/core/renderer/vulkan/VulkanConversor.h
         eagle/core/renderer/vulkan/VulkanCleaner.h
+        eagle/core/renderer/vulkan/VulkanComputeShader.h
+        eagle/core/renderer/vulkan/VulkanShaderUtils.h
         )
 
 set(RENDERER_SOURCE
-        eagle/core/source/renderer/Shader.cpp
         eagle/core/source/renderer/UniformBuffer.cpp
         eagle/core/source/renderer/DescriptorSet.cpp
         eagle/core/source/renderer/VertexLayout.cpp
@@ -114,6 +116,8 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanConversor.cpp
         eagle/core/source/renderer/vulkan/VulkanCommandBuffer.cpp
         eagle/core/source/renderer/vulkan/VulkanCleaner.cpp
+        eagle/core/source/renderer/vulkan/VulkanComputeShader.cpp
+        eagle/core/source/renderer/vulkan/VulkanShaderUtils.cpp
         )
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})
@@ -148,19 +152,23 @@ add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
 
 set(RAYTRACER_INCLUDE
         eagle/raytracer/RaytracerGlobalDefinitions.h
-        eagle/raytracer/RenderLayer.h
         eagle/raytracer/Raytracer.h
+        eagle/raytracer/renderer/RenderLayer.h
+        eagle/raytracer/renderer/RenderMaster.h
         eagle/raytracer/editor/EditorMaster.h
         eagle/raytracer/editor/EditorLayer.h
         eagle/raytracer/editor/EditorWindow.h
-        eagle/raytracer/editor/FooWindow.h)
+        eagle/raytracer/editor/FooWindow.h
+        eagle/raytracer/main/MainLayer.h)
 
 set(RAYTRACER_SOURCE
-        eagle/raytracer/source/RenderLayer.cpp
+        eagle/raytracer/source/renderer/RenderLayer.cpp
+        eagle/raytracer/source/renderer/RenderMaster.cpp
         eagle/raytracer/source/editor/EditorLayer.cpp
         eagle/raytracer/source/editor/EditorMaster.cpp
         eagle/raytracer/source/editor/EditorWindow.cpp
-        eagle/raytracer/source/editor/FooWindow.cpp)
+        eagle/raytracer/source/editor/FooWindow.cpp
+        eagle/raytracer/source/main/MainLayer.cpp)
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 

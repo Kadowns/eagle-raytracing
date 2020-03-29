@@ -16,8 +16,8 @@ void EditorWindow::handle_update() {
         m_isHovered = ImGui::IsWindowHovered();
         m_isFocused = ImGui::IsWindowFocused();
         handle_window_update();
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 EG_RAYTRACER_END

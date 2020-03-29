@@ -7,9 +7,8 @@
 
 EG_BEGIN
 
-VulkanUniformBuffer::VulkanUniformBuffer(VulkanUniformBufferCreateInfo &createInfo, VulkanCleaner &cleaner,
-                                         size_t size, void *data) :
-        UniformBuffer(size), VulkanCleanable(cleaner), m_info(createInfo) {
+VulkanUniformBuffer::VulkanUniformBuffer(VulkanUniformBufferCreateInfo &createInfo, size_t size, void *data) :
+        UniformBuffer(size), m_info(createInfo) {
 
     if (data != nullptr){
         memcpy(m_bytes.data(), data, size);
@@ -71,7 +70,7 @@ void VulkanUniformBuffer::update() {
     for (int i = 0; i < m_buffers.size(); i++){
         m_dirtyBuffers.insert(i);
     }
-    m_cleaner.push(this);
+    VulkanCleaner::push(this);
     m_dirtyBytes = false;
 }
 

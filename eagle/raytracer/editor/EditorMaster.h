@@ -21,7 +21,7 @@ public:
     void init(Reference<RenderingContext>& context);
     void deinit();
     void update();
-    void render(Scope<CommandBuffer>& commandBuffer);
+    void render(Reference <Eagle::CommandBuffer> &commandBuffer);
 
     void add_window(const Reference<EditorWindow>& window);
     void remove_window(const Reference<EditorWindow>& window);

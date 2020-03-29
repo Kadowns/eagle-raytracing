@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by Novak on 27/09/2019.
 //
@@ -8,27 +10,48 @@
 #include <eagle/core/renderer/vulkan/VulkanVertexBuffer.h>
 #include <eagle/core/renderer/vulkan/VulkanIndexBuffer.h>
 #include <eagle/core/renderer/vulkan/VulkanDescriptorSet.h>
+#include <eagle/core/renderer/vulkan/VulkanComputeShader.h>
 
 EG_BEGIN
 
-VulkanCommandBuffer::VulkanCommandBuffer(VkCommandBuffer &commandBuffer, uint32_t imageIndex) :
-    m_commandBuffer(commandBuffer), m_imageIndex(imageIndex), m_finished(false) {
+VulkanCommandBuffer::VulkanCommandBuffer(VkDevice &device, VkCommandPool &commandPool, uint32_t &imageIndexRef,
+                                         const std::function<void(VkCommandBuffer&)>& submit_callback) :
+    m_device(device), m_commandPool(commandPool), m_imageIndexRef(imageIndexRef), submit_command_buffer_callback(submit_callback){
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    VK_CALL_ASSERT(vkAllocateCommandBuffers(device, &allocInfo, &m_commandBuffer)) {
+        throw std::runtime_error("failed to allocate command buffer!");
+    }
+}
+
+VulkanCommandBuffer::~VulkanCommandBuffer() {
+//    if (!m_finished){
+//        VK_CALL vkEndCommandBuffer(m_commandBuffer);
+//    }
+
+    VK_CALL vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_commandBuffer);
+}
+
+void VulkanCommandBuffer::begin() {
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
     VK_CALL vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
-}
-
-VulkanCommandBuffer::~VulkanCommandBuffer() {
-    if (!m_finished){
-        VK_CALL vkEndCommandBuffer(m_commandBuffer);
-    }
+    m_finished = false;
 }
 
 void VulkanCommandBuffer::finish() {
     VK_CALL vkEndCommandBuffer(m_commandBuffer);
     m_finished = true;
+}
+
+void VulkanCommandBuffer::submit() {
+    submit_command_buffer_callback(m_commandBuffer);
 }
 
 bool VulkanCommandBuffer::is_finished() {
@@ -60,15 +83,20 @@ void VulkanCommandBuffer::bind_shader(const Reference<Shader> &shader) {
     VK_CALL vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vs->get_pipeline());
 }
 
+void VulkanCommandBuffer::bind_compute_shader(const Reference<ComputeShader> &shader) {
+    Reference<VulkanComputeShader> vcs = std::static_pointer_cast<VulkanComputeShader>(shader);
+    VK_CALL vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vcs->get_pipeline());
+}
+
 void VulkanCommandBuffer::bind_vertex_buffer(const Reference<VertexBuffer> &vertexBuffer) {
     Reference<VulkanVertexBuffer> vvb = std::static_pointer_cast<VulkanVertexBuffer>(vertexBuffer);
     VkDeviceSize offsets[] = {0};
-    VK_CALL vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, &vvb->get_buffer(m_imageIndex).get_native_buffer(), offsets);
+    VK_CALL vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, &vvb->get_buffer(m_imageIndexRef).get_native_buffer(), offsets);
 }
 
 void VulkanCommandBuffer::bind_index_buffer(const Reference<IndexBuffer> &indexBuffer) {
     Reference<VulkanIndexBuffer> vib = std::static_pointer_cast<VulkanIndexBuffer>(indexBuffer);
-    VK_CALL vkCmdBindIndexBuffer(m_commandBuffer, vib->get_buffer(m_imageIndex).get_native_buffer(), 0, vib->get_native_index_type());
+    VK_CALL vkCmdBindIndexBuffer(m_commandBuffer, vib->get_buffer(m_imageIndexRef).get_native_buffer(), 0, vib->get_native_index_type());
 }
 
 void VulkanCommandBuffer::bind_descriptor_sets(const Reference<Shader> &shader, const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) {
@@ -76,7 +104,14 @@ void VulkanCommandBuffer::bind_descriptor_sets(const Reference<Shader> &shader, 
     Reference<VulkanShader> vs = std::static_pointer_cast<VulkanShader>(shader);
     Reference<VulkanDescriptorSet> vds = std::static_pointer_cast<VulkanDescriptorSet>(descriptorSet);
 
-    VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vs->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndex], 0, nullptr);
+    VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vs->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndexRef], 0, nullptr);
+}
+
+void VulkanCommandBuffer::bind_descriptor_sets(const Reference<ComputeShader> &shader, const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) {
+    Reference<VulkanComputeShader> vcs = std::static_pointer_cast<VulkanComputeShader>(shader);
+    Reference<VulkanDescriptorSet> vds = std::static_pointer_cast<VulkanDescriptorSet>(descriptorSet);
+
+    VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vcs->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndexRef], 0, nullptr);
 }
 
 void VulkanCommandBuffer::push_constants(const Reference<Shader> &shader, ShaderStage stage, uint32_t offset, size_t size, void *data) {
@@ -110,5 +145,30 @@ void VulkanCommandBuffer::set_scissor(uint32_t w, uint32_t h, uint32_t x, uint32
     VK_CALL vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 }
 
+void VulkanCommandBuffer::pipeline_barrier(const Reference <ImageAttachment> &image, ShaderStage srcStage,
+                                           ShaderStage dstStage) {
+    VkImageMemoryBarrier imageMemoryBarrier = {};
+    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    // We won't be changing the layout of the image
+    imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageMemoryBarrier.image = std::static_pointer_cast<VulkanImageAttachment>(image)->image;
+    imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    VK_CALL vkCmdPipelineBarrier(
+            m_commandBuffer,
+            VulkanConversor::to_vk(srcStage),
+            VulkanConversor::to_vk(dstStage),
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrier);
+
+}
+
+void VulkanCommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
+    VK_CALL vkCmdDispatch(m_commandBuffer, groupCountX, groupCountY, groupCountZ);
+}
 
 EG_END

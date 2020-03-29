@@ -12,12 +12,18 @@ EG_BEGIN
 
 enum class DescriptorType{
     UNIFORM_BUFFER = 0,
-    IMAGE_2D = 1
+    SAMPLED_IMAGE_2D = 1,
+    STORAGE_IMAGE_2D = 2
 };
 
 enum class BufferUsage {
     CONSTANT  = 0,
     DYNAMIC    = 1
+};
+
+enum class TextureUsage {
+    READ,
+    STORAGE
 };
 
 enum class ShaderStage{

@@ -16,6 +16,7 @@
 #include "Texture2D.h"
 #include "RenderTarget.h"
 #include "CommandBuffer.h"
+#include "ComputeShader.h"
 
 EG_BEGIN
 
@@ -30,11 +31,12 @@ public:
     virtual void init(Window *window) = 0;
     virtual void deinit() = 0;
     virtual void handle_window_resized(int width, int height) = 0;
+    virtual void set_recreation_callback(std::function<void()> recreation_callback) = 0;
 
     virtual bool prepare_frame() = 0;
-    virtual Scope <Eagle::CommandBuffer> create_command_buffer() = 0;
+    virtual Reference <Eagle::CommandBuffer> create_command_buffer() = 0;
     virtual const Reference <RenderTarget> main_render_target() = 0;
-    virtual void submit_command_buffer(Scope <Eagle::CommandBuffer> &commandBuffer) = 0;
+
     virtual void present_frame() = 0;
 
     virtual Handle <Shader>
@@ -63,6 +65,12 @@ public:
 
     virtual Handle<RenderTarget>
     create_render_target(const std::vector<RENDER_TARGET_ATTACHMENT> &attachments) = 0;
+
+    virtual Handle<ComputeShader>
+    create_compute_shader(const std::string& path) = 0;
+
+    virtual void
+    destroy_texture_2d(const Reference<Texture2D>& texture) = 0;
 
 };
 

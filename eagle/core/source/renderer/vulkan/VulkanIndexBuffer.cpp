@@ -7,10 +7,9 @@
 
 EG_BEGIN
 
-VulkanIndexBuffer::VulkanIndexBuffer(VkDevice device, VulkanCleaner &cleaner,
-                                     VulkanIndexBufferCreateInfo &createInfo, void *indexData, size_t indexCount,
+VulkanIndexBuffer::VulkanIndexBuffer(VkDevice device, VulkanIndexBufferCreateInfo &createInfo, void *indexData,
+                                     size_t indexCount,
                                      IndexBufferType indexType, BufferUsage usage) :
-        VulkanCleanable(cleaner),
         m_device(device),
         m_physicalDevice(createInfo.physicalDevice),
         m_indexCount(indexCount),
@@ -158,7 +157,7 @@ void VulkanIndexBuffer::upload(void *data, uint32_t indexCount) {
         for (int i = 0; i < m_buffers.size(); i++){
             m_dirtyBuffers.insert(i);
         }
-        m_cleaner.push(this);
+        VulkanCleaner::push(this);
     }
     m_indexCount = indexCount;
 }

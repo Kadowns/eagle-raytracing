@@ -76,7 +76,6 @@ void EditorMaster::init(Reference<RenderingContext> &context) {
     fontCreateInfo.filter = Filter::LINEAR;
     fontCreateInfo.layerCount = 1;
     fontCreateInfo.mipLevels = 1;
-    fontCreateInfo.channels = 4;
     fontCreateInfo.pixels = std::vector<Pixel>(pixels,
                                                pixels + fontCreateInfo.width * fontCreateInfo.height * 4);
 
@@ -93,7 +92,7 @@ void EditorMaster::init(Reference<RenderingContext> &context) {
 
     DescriptorBindingDescription binding = {};
     binding.shaderStage = ShaderStage::FRAGMENT;
-    binding.descriptorType = DescriptorType::IMAGE_2D;
+    binding.descriptorType = DescriptorType::SAMPLED_IMAGE_2D;
     binding.binding = 0;
 
     m_descriptorLayout = context->create_descriptor_set_layout({binding});
@@ -140,7 +139,7 @@ void EditorMaster::update() {
     }
 }
 
-void EditorMaster::render(Scope<CommandBuffer> &commandBuffer) {
+void EditorMaster::render(Reference<CommandBuffer> &commandBuffer) {
 
     ImGuiIO &io = ImGui::GetIO();
     ImDrawData *imDrawData = ImGui::GetDrawData();

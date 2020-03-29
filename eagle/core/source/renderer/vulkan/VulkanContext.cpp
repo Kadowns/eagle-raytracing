@@ -64,6 +64,7 @@ void VulkanContext::deinit() {
     m_textures.clear();
     m_renderTargets.clear();
     m_shaders.clear();
+    m_computeShaders.clear();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         VK_CALL
@@ -74,8 +75,12 @@ void VulkanContext::deinit() {
         vkDestroyFence(m_device, m_inFlightFences[i], nullptr);
     }
 
+
     VK_CALL
-    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+    vkDestroyCommandPool(m_device, m_graphicsCommandPool, nullptr);
+
+    VK_CALL
+    vkDestroyCommandPool(m_device, m_computeCommandPool, nullptr);
 
     VK_CALL
     vkDestroyDevice(m_device, nullptr);
@@ -379,11 +384,26 @@ VulkanContext::QueueFamilyIndices VulkanContext::find_family_indices(VkPhysicalD
         if (queueFamily.queueCount > 0 && presentSupport) {
             indices.presentFamily = i;
         }
+        if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) && ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0)) {
+            indices.computeFamily = i;
+        }
 
         if (indices.isComplete()) {
             break;
         }
         i++;
+    }
+
+    if (!indices.computeFamily.has_value()){
+        EG_WARNING("No dedicated compute queue found! Searching for any suitable queue family");
+        i = 0;
+        for (const auto &queueFamily : queueFamilies) {
+            if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT){
+                indices.computeFamily = i;
+                break;
+            }
+            i++;
+        }
     }
 
     return indices;
@@ -455,7 +475,7 @@ void VulkanContext::create_logical_device() {
     QueueFamilyIndices indices = find_family_indices(m_physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value(), indices.computeFamily.value()};
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -492,10 +512,9 @@ void VulkanContext::create_logical_device() {
         throw std::runtime_error("failed to create logical device!");
     }
 
-    VK_CALL
-    vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
-    VK_CALL
-    vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_presentQueue);
+    VK_CALL vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
+    VK_CALL vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_presentQueue);
+    VK_CALL vkGetDeviceQueue(m_device, indices.computeFamily.value(), 0, &m_computeQueue);
 
     EG_CORE_TRACE("Logical device created!");
 }
@@ -557,11 +576,12 @@ void VulkanContext::create_swapchain() {
 
     QueueFamilyIndices indices = find_family_indices(m_physicalDevice);
     uint32_t queueFamilyIndices[] = {(uint32_t) indices.graphicsFamily.value(),
-                                     (uint32_t) indices.presentFamily.value()};
+                                     (uint32_t) indices.presentFamily.value(),
+                                     (uint32_t) indices.computeFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        createInfo.queueFamilyIndexCount = 2;
+        createInfo.queueFamilyIndexCount = 3;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
     } else {
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -683,9 +703,9 @@ void VulkanContext::create_depth_resources() {
                                     VK_IMAGE_VIEW_TYPE_2D, subresourceRange);
 
 
-    VulkanHelper::transition_image_layout(m_device, m_commandPool, m_graphicsQueue,
-                                          m_present.depth.image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRange);
+    VulkanHelper::transition_image_layout(m_device, m_graphicsCommandPool, m_graphicsQueue,
+                                          m_present.depth.image, VK_IMAGE_LAYOUT_UNDEFINED,
+                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRange, 0, 0);
 }
 
 VkFormat VulkanContext::find_supported_format(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
@@ -792,59 +812,58 @@ void VulkanContext::create_command_pool() {
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    VK_CALL_ASSERT(vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool)) {
-        throw std::runtime_error("failed to create command pool!");
+    VK_CALL_ASSERT(vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_graphicsCommandPool)) {
+        throw std::runtime_error("failed to create graphics command pool!");
+    }
+
+    poolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
+
+    VK_CALL_ASSERT(vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_computeCommandPool)){
+        throw std::runtime_error("failed to create compute command pool!");
     }
 
     EG_CORE_TRACE("Command pool created!");
 }
 
-void VulkanContext::create_framebuffers() {
-
-    EG_CORE_TRACE("Creating framebuffers!");
-
-//    m_present.framebuffers.resize(m_present.imageCount);
-//
-//    EG_CORE_INFO_F("Number of framebuffers: {0}", m_present.framebuffers.size());
-//
-//    for (size_t i = 0; i < m_present.swapchainImageViews.size(); i++) {
-//        std::array<VkImageView, 2> attachments = {
-//                m_present.swapchainImageViews[i],
-//                m_present.depth.view
-//        };
-//
-//        VkFramebufferCreateInfo framebufferInfo = {};
-//        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-//        framebufferInfo.renderPass = m_present.renderPass;
-//        framebufferInfo.attachmentCount = attachments.size();
-//        framebufferInfo.pAttachments = attachments.data();
-//        framebufferInfo.width = m_present.extent2D.width;
-//        framebufferInfo.height = m_present.extent2D.height;
-//        framebufferInfo.layers = 1;
-//
-//        VK_CALL_ASSERT(vkCreateFramebuffer(m_device, &framebufferInfo, nullptr, &m_present.framebuffers[i])) {
-//            throw std::runtime_error("failed to create framebuffer!");
-//        }
-//    }
-    EG_CORE_TRACE("Framebuffers created!");
-}
-
 void VulkanContext::allocate_command_buffers() {
 
-    EG_CORE_TRACE("Allocating primary command buffers!");
+    EG_CORE_TRACE("Allocating graphics command buffers!");
 
     m_commandBuffers.resize(m_present.imageCount);
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = m_commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t) m_commandBuffers.size();
-
-    VK_CALL_ASSERT(vkAllocateCommandBuffers(m_device, &allocInfo, m_commandBuffers.data())) {
-        throw std::runtime_error("failed to allocate command buffers!");
+    for (int i = 0; i < m_commandBuffers.size(); i++) {
+        m_commandBuffers[i] = std::make_shared<VulkanCommandBuffer>(
+                m_device,
+                m_graphicsCommandPool,
+                m_present.imageIndex,
+                [&](VkCommandBuffer &commandBuffer) { submit_command_buffer(commandBuffer); }
+        );
     }
 
-    EG_CORE_TRACE("Primary command buffers allocated!");
+    EG_CORE_TRACE("Graphics command buffers allocated!");
+}
+
+void VulkanContext::submit_command_buffer(VkCommandBuffer& commandBuffer){
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkSemaphore waitSemaphores[] = {m_imageAvailableSemaphores[m_currentFrame]};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    VK_CALL vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
+
+    VK_CALL_ASSERT(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[m_currentFrame])) {
+        throw std::runtime_error("failed to submit command buffer!");
+    }
 }
 
 void VulkanContext::create_sync_objects() {
@@ -913,14 +932,25 @@ void VulkanContext::recreate_swapchain() {
         descriptorSet->update_descriptor_sets();
     }
 
+    for (auto& computeShader : m_computeShaders){
+        computeShader->recreate(m_present.imageCount);
+    }
+
+    recreation_callback();
+
     EG_CORE_TRACE("Swapchain recreated!");
 }
 
 void VulkanContext::cleanup_swapchain() {
     EG_CORE_TRACE("Clearing swapchain!");
 
-    VK_CALL vkFreeCommandBuffers(m_device, m_commandPool, static_cast<uint32_t>(m_commandBuffers.size()),
-                         m_commandBuffers.data());
+    VulkanCleaner::clear();
+
+    m_commandBuffers.clear();
+
+    for (auto& computeShader : m_computeShaders){
+        computeShader->clear_descriptor_set();
+    }
 
     for (auto &descriptorSet : m_descriptorSets) {
         descriptorSet->cleanup();
@@ -960,6 +990,18 @@ VulkanContext::create_shader(const std::unordered_map<ShaderStage, std::string> 
     return m_shaders.back();
 }
 
+Handle<ComputeShader>
+VulkanContext::create_compute_shader(const std::string &path) {
+    VulkanComputeShaderCreateInfo createInfo = {};
+    createInfo.device = m_device;
+    createInfo.commandPool = m_computeCommandPool;
+    createInfo.imageIndex = &m_present.imageIndex;
+    createInfo.bufferCount = m_present.imageCount;
+    createInfo.computeQueue = m_computeQueue;
+    m_computeShaders.emplace_back(std::make_shared<VulkanComputeShader>(path, createInfo));
+    return m_computeShaders.back();
+}
+
 Handle<VertexBuffer>
 VulkanContext::create_vertex_buffer(void *vertices, uint32_t count, const VertexLayout &vertexLayout,
                                     BufferUsage usage) {
@@ -968,10 +1010,10 @@ VulkanContext::create_vertex_buffer(void *vertices, uint32_t count, const Vertex
     createInfo.data = vertices;
     createInfo.count = count;
     createInfo.physicalDevice = m_physicalDevice;
-    createInfo.commandPool = m_commandPool;
+    createInfo.commandPool = m_graphicsCommandPool;
     createInfo.graphicsQueue = m_graphicsQueue;
     createInfo.bufferCount = usage == BufferUsage::DYNAMIC ? m_present.imageCount : 1;
-    m_vertexBuffers.emplace_back(std::make_shared<VulkanVertexBuffer>(m_device, m_cleaner, createInfo, usage));
+    m_vertexBuffers.emplace_back(std::make_shared<VulkanVertexBuffer>(m_device, createInfo, usage));
     return m_vertexBuffers.back();
 }
 
@@ -982,9 +1024,9 @@ VulkanContext::create_index_buffer(void *indexData, size_t indexCount, IndexBuff
     VulkanIndexBufferCreateInfo createInfo = {};
     createInfo.graphicsQueue = m_graphicsQueue;
     createInfo.physicalDevice = m_physicalDevice;
-    createInfo.commandPool = m_commandPool;
+    createInfo.commandPool = m_graphicsCommandPool;
     createInfo.bufferCount = usage == BufferUsage::DYNAMIC ? m_present.imageCount : 1;
-    m_indexBuffers.emplace_back(std::make_shared<VulkanIndexBuffer>(m_device, m_cleaner, createInfo, indexData, indexCount, indexType, usage));
+    m_indexBuffers.emplace_back(std::make_shared<VulkanIndexBuffer>(m_device, createInfo, indexData, indexCount, indexType, usage));
     return m_indexBuffers.back();
 }
 
@@ -995,7 +1037,7 @@ VulkanContext::create_uniform_buffer(size_t size, void *data) {
     createInfo.device = m_device;
     createInfo.physicalDevice = m_physicalDevice;
     createInfo.bufferCount = m_present.imageCount;
-    m_uniformBuffers.emplace_back(std::make_shared<VulkanUniformBuffer>(createInfo, m_cleaner, size, data));
+    m_uniformBuffers.emplace_back(std::make_shared<VulkanUniformBuffer>(createInfo, size, data));
     return m_uniformBuffers.back();
 }
 
@@ -1018,7 +1060,6 @@ VulkanContext::create_descriptor_set(const Reference<DescriptorSetLayout>& descr
     m_descriptorSets.emplace_back(std::make_shared<VulkanDescriptorSet>(
             std::static_pointer_cast<VulkanDescriptorSetLayout>(descriptorLayout),
             descriptorItems,
-            m_cleaner,
             createInfo
             )
     );
@@ -1032,7 +1073,7 @@ VulkanContext::create_texture_2d(const Texture2DCreateInfo &createInfo) {
     VulkanTexture2DCreateInfo vulkanTextureCreateInfo = {};
     vulkanTextureCreateInfo.device = m_device;
     vulkanTextureCreateInfo.physicalDevice = m_physicalDevice;
-    vulkanTextureCreateInfo.commandPool = m_commandPool;
+    vulkanTextureCreateInfo.commandPool = m_graphicsCommandPool;
     vulkanTextureCreateInfo.graphicsQueue = m_graphicsQueue;
 
     m_textures.emplace_back(std::make_shared<VulkanTexture2D>(createInfo, vulkanTextureCreateInfo));
@@ -1127,13 +1168,12 @@ void VulkanContext::create_offscreen_render_pass() {
     VK_CALL vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &m_present.offscreenPass);
 }
 
-Scope<CommandBuffer> VulkanContext::create_command_buffer() {
-    return std::make_unique<VulkanCommandBuffer>(m_present.commandBuffer, m_present.imageIndex);
+Reference<CommandBuffer> VulkanContext::create_command_buffer() {
+    return m_commandBuffers[m_present.imageIndex];
 }
 
 bool VulkanContext::prepare_frame() {
-    VK_CALL
-    vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    VK_CALL vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
     VkResult result;
     VK_CALL
@@ -1147,39 +1187,9 @@ bool VulkanContext::prepare_frame() {
         throw std::runtime_error("failed to acquire swapchain image!");
     }
 
-    m_present.commandBuffer = m_commandBuffers[m_present.imageIndex];
-
     //updates dirty buffers-------------------------
-    m_cleaner.flush(m_present.imageIndex);
+    VulkanCleaner::flush(m_present.imageIndex);
     return true;
-}
-
-void VulkanContext::submit_command_buffer(Scope<CommandBuffer> &commandBuffer) {
-
-    auto vcb = static_cast<VulkanCommandBuffer*>(commandBuffer.get())->native_command_buffer();
-    commandBuffer.reset();
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    VkSemaphore waitSemaphores[] = {m_imageAvailableSemaphores[m_currentFrame]};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
-
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &vcb;
-
-    VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
-
-    VK_CALL vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
-
-    VK_CALL_ASSERT(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[m_currentFrame])) {
-        throw std::runtime_error("failed to submit command buffer!");
-    }
 }
 
 void VulkanContext::present_frame() {
@@ -1213,6 +1223,14 @@ void VulkanContext::present_frame() {
 
 const Reference<RenderTarget> VulkanContext::main_render_target() {
     return m_present.renderTargets[m_present.imageIndex];
+}
+
+void VulkanContext::destroy_texture_2d(const Reference<Texture2D> &texture) {
+    m_textures.erase(std::find(m_textures.begin(), m_textures.end(), std::static_pointer_cast<VulkanTexture2D>(texture)));
+}
+
+void VulkanContext::set_recreation_callback(std::function<void()> recreation_callback) {
+    this->recreation_callback = recreation_callback;
 }
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,

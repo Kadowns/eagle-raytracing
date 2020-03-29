@@ -22,8 +22,7 @@ class VulkanUniformBuffer : public UniformBuffer, public VulkanCleanable {
 
 public:
 
-    explicit VulkanUniformBuffer(VulkanUniformBufferCreateInfo &createInfo, VulkanCleaner &cleaner,
-                                 size_t size, void *data);
+    explicit VulkanUniformBuffer(VulkanUniformBufferCreateInfo &createInfo, size_t size, void *data);
     virtual ~VulkanUniformBuffer();
 
     inline std::vector<Reference<VulkanBuffer>>& get_buffers() { return m_buffers; }

@@ -29,7 +29,7 @@ struct ShaderPipelineInfo {
 class Shader {
 
 public:
-    Shader();
+    Shader() = default;
     virtual ~Shader() = default;
 
     virtual void create_pipeline() = 0;

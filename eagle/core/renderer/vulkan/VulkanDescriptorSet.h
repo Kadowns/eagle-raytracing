@@ -20,8 +20,9 @@ class VulkanDescriptorSet : public DescriptorSet, public VulkanCleanable {
 public:
     VulkanDescriptorSet(const Reference<VulkanDescriptorSetLayout> &descriptorSetLayout,
                         const std::vector<Reference<DescriptorItem>> &descriptorItems,
-                        VulkanCleaner& cleaner,
-                        VulkanDescriptorSetCreateInfo createInfo);
+                        const VulkanDescriptorSetCreateInfo& createInfo);
+
+    VulkanDescriptorSet(const Reference<VulkanDescriptorSetLayout>& descriptorSetLayout, const VulkanDescriptorSetCreateInfo& createInfo);
     ~VulkanDescriptorSet();
 
     void cleanup();

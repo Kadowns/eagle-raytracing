@@ -26,8 +26,8 @@ class VulkanImage : public Image {
 
 public:
 
-    VulkanImage(uint32_t width, uint32_t height) :
-        Image(width, height),
+    VulkanImage(DescriptorType type, uint32_t width, uint32_t height) :
+        Image(type, width, height),
         m_attachment(std::make_shared<VulkanImageAttachment>()),
         m_sampler(std::make_shared<VulkanImageSampler>()) {}
 

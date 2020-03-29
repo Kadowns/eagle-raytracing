@@ -19,7 +19,7 @@ struct ImageSampler{};
 class Image : public DescriptorItem {
 public:
 
-    Image(uint32_t width, uint32_t height) : DescriptorItem(DescriptorType::IMAGE_2D), m_width(width), m_height(height) {}
+    Image(DescriptorType type, uint32_t width, uint32_t height) : DescriptorItem(type), m_width(width), m_height(height) {}
     virtual ~Image() = default;
     uint32_t get_width() const {return m_width;}
     uint32_t get_height() const {return m_height;}
