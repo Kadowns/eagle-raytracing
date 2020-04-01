@@ -6,6 +6,6 @@
 #define EAGLE_EAGLE_H
 
 #include <eagle/core/Core.h>
-#include <eagle/raytracer/Raytracer.h>
+#include <eagle/application/RaytracerApplication.h>
 
 #endif //EAGLE_EAGLE_H

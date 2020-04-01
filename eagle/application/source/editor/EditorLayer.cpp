@@ -2,16 +2,16 @@
 // Created by Novak on 22/03/2020.
 //
 
-#include <eagle/raytracer/editor/EditorLayer.h>
-#include <eagle/raytracer/editor/FooWindow.h>
+#include <eagle/application/editor/EditorLayer.h>
+#include <eagle/application/editor/FooWindow.h>
 
-#include <eagle/raytracer/renderer/RenderLayer.h>
+#include <eagle/application/renderer/RenderLayer.h>
 
 EG_RAYTRACER_BEGIN
 
 EditorLayer::EditorLayer() {
-    handle_render_init_callback = [&](Reference<RenderingContext>& context){
-        m_editorMaster.init(context);
+    handle_render_init_callback = [&](){
+        m_editorMaster.init(RenderMaster::context());
     };
 
     handle_render_deinit_callback = [&](){
@@ -24,13 +24,13 @@ EditorLayer::EditorLayer() {
 
     RenderMaster::handle_render_init += &handle_render_init_callback;
     RenderMaster::handle_render_deinit += &handle_render_deinit_callback;
-    RenderMaster::handle_main_render_pass_draw += &handle_render_draw_callback;
+    RenderMaster::handle_command_buffer_main_render_pass += &handle_render_draw_callback;
 }
 
 EditorLayer::~EditorLayer() {
     RenderMaster::handle_render_init -= &handle_render_init_callback;
     RenderMaster::handle_render_deinit -= &handle_render_deinit_callback;
-    RenderMaster::handle_main_render_pass_draw -= &handle_render_draw_callback;
+    RenderMaster::handle_command_buffer_main_render_pass -= &handle_render_draw_callback;
 }
 
 void EditorLayer::handle_attach() {

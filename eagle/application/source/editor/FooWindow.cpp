@@ -2,7 +2,7 @@
 // Created by Novak on 22/03/2020.
 //
 
-#include <eagle/raytracer/editor/FooWindow.h>
+#include <eagle/application/editor/FooWindow.h>
 #include <imgui/imgui.h>
 
 EG_RAYTRACER_BEGIN

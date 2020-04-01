@@ -5,8 +5,8 @@
 #ifndef EAGLE_RENDERLAYER_H
 #define EAGLE_RENDERLAYER_H
 
-#include <eagle/raytracer/RaytracerGlobalDefinitions.h>
-#include <eagle/raytracer/renderer/RenderMaster.h>
+#include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
+#include <eagle/application/renderer/RenderMaster.h>
 
 EG_RAYTRACER_BEGIN
 

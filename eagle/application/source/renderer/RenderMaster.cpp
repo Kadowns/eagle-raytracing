@@ -2,14 +2,20 @@
 // Created by Novak on 22/03/2020.
 //
 
-#include <eagle/raytracer/renderer/RenderMaster.h>
-#include <eagle/core/renderer/Shader.h>
+#include <eagle/application/renderer/RenderMaster.h>
+
+
 
 EG_RAYTRACER_BEGIN
 
-RenderMaster::InitEvent RenderMaster::handle_render_init;
-RenderMaster::DeinitEvent RenderMaster::handle_render_deinit;
-RenderMaster::RenderPassDrawEvent RenderMaster::handle_main_render_pass_draw;
+RenderMaster::Event RenderMaster::handle_render_init;
+RenderMaster::Event RenderMaster::handle_render_deinit;
+RenderMaster::Event RenderMaster::handle_frame_begin;
+RenderMaster::Event RenderMaster::handle_frame_end;
+RenderMaster::Event RenderMaster::handle_context_recreated;
+RenderMaster::CommandBufferEvent RenderMaster::handle_command_buffer_begin;
+RenderMaster::CommandBufferEvent RenderMaster::handle_command_buffer_end;
+RenderMaster::CommandBufferEvent RenderMaster::handle_command_buffer_main_render_pass;
 
 Reference<RenderingContext> RenderMaster::s_context;
 
@@ -22,14 +28,23 @@ void RenderMaster::init() {
     s_context = std::make_shared<VulkanContext>();
     s_context->init(&window);
     s_context->set_recreation_callback([&](){
-        init_compute_target();
-        graphics.descriptorSet.lock()->update({compute.imageTarget.lock()->get_image().lock()});
+        handle_context_recreated();
     });
 
-    init_compute();
+    raytracer_target_created_callback = [&](const OnRaytracerTargetCreated& ev){
+        if (graphics.descriptorSet.lock()){
+            graphics.descriptorSet.lock()->update({ev.target->get_image().lock()});
+        }
+        else {
+            graphics.descriptorSet = s_context->create_descriptor_set(graphics.shader.lock()->get_descriptor_set_layout(0).lock(), {ev.target->get_image().lock()});
+        }
+    };
+
+    EventMaster::instance().subscribe<OnRaytracerTargetCreated>(&raytracer_target_created_callback);
+
     init_graphics();
 
-    handle_render_init(s_context);
+    handle_render_init();
 }
 
 void RenderMaster::update() {
@@ -38,32 +53,37 @@ void RenderMaster::update() {
         return;
     }
 
-    compute.shader.lock()->dispatch(screen.width / 16, screen.height / 16, 1);
+    handle_frame_begin();
 
     auto commandBuffer = s_context->create_command_buffer();
     commandBuffer->begin();
 
-    commandBuffer->pipeline_barrier(compute.imageTarget.lock()->get_image().lock()->get_attachment().lock(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
+    handle_command_buffer_begin(commandBuffer);
 
     commandBuffer->begin_render_pass(s_context->main_render_target());
 
     commandBuffer->bind_shader(graphics.shader.lock());
+    commandBuffer->bind_descriptor_sets(graphics.shader.lock(), graphics.descriptorSet.lock(), 0);
     commandBuffer->bind_vertex_buffer(graphics.vertexBuffer.lock());
     commandBuffer->bind_index_buffer(graphics.indexBuffer.lock());
-    commandBuffer->bind_descriptor_sets(graphics.shader.lock(), graphics.descriptorSet.lock(), 0);
     commandBuffer->draw_indexed(graphics.indexBuffer.lock()->get_indices_count(), 0, 0);
 
+    handle_command_buffer_main_render_pass(commandBuffer);
 
-    handle_main_render_pass_draw(commandBuffer);
     commandBuffer->end_render_pass();
+
+    handle_command_buffer_end(commandBuffer);
 
     commandBuffer->finish();
     commandBuffer->submit();
+
+    handle_frame_end();
 
     s_context->present_frame();
 }
 
 void RenderMaster::deinit() {
+    EventMaster::instance().unsubscribe<OnRaytracerTargetCreated>(&raytracer_target_created_callback);
     handle_render_deinit();
     s_context->deinit();
 }
@@ -72,11 +92,6 @@ void RenderMaster::handle_window_resized(uint32_t width, uint32_t height) {
     screen.width = width;
     screen.height = height;
     s_context->handle_window_resized(width, height);
-}
-
-void RenderMaster::init_compute() {
-    compute.shader = s_context->create_compute_shader(ProjectRoot + "/shaders/compute.comp");
-    init_compute_target();
 }
 
 void RenderMaster::init_graphics() {
@@ -111,30 +126,6 @@ void RenderMaster::init_graphics() {
     };
 
     graphics.indexBuffer = s_context->create_index_buffer(indices.data(), indices.size(), IndexBufferType::UINT_32, BufferUsage::CONSTANT);
-
-    graphics.descriptorSet = s_context->create_descriptor_set(graphics.shader.lock()->get_descriptor_set_layout(0).lock(), {compute.imageTarget.lock()->get_image().lock()});
-
-
-}
-
-void RenderMaster::init_compute_target() {
-
-    if (compute.imageTarget.lock()){
-        s_context->destroy_texture_2d(compute.imageTarget.lock());
-    }
-
-    Texture2DCreateInfo textureCreateInfo = {};
-    textureCreateInfo.usage = TextureUsage::STORAGE;
-    textureCreateInfo.width = screen.width;
-    textureCreateInfo.height = screen.height;
-    textureCreateInfo.filter = Filter::NEAREST;
-    textureCreateInfo.layerCount = 1;
-    textureCreateInfo.mipLevels = 1;
-    textureCreateInfo.format = Format::R8G8B8A8_UNORM;
-
-    compute.imageTarget = s_context->create_texture_2d(textureCreateInfo);
-    compute.shader.lock()->update_descriptor_items({compute.imageTarget.lock()->get_image().lock()});
-
 
 }
 

@@ -2,7 +2,7 @@
 // Created by Novak on 17/03/2020.
 //
 
-#include <eagle/raytracer/renderer/RenderLayer.h>
+#include <eagle/application/renderer/RenderLayer.h>
 
 EG_RAYTRACER_BEGIN
 

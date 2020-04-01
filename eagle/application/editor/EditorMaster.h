@@ -5,9 +5,9 @@
 #ifndef EAGLE_EDITORMASTER_H
 #define EAGLE_EDITORMASTER_H
 
-#include <eagle/raytracer/RaytracerGlobalDefinitions.h>
+#include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
 
-#include <eagle/raytracer/editor/EditorWindow.h>
+#include <eagle/application/editor/EditorWindow.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -18,7 +18,7 @@ public:
         glm::vec2 translate;
     } pushConstBlock;
 public:
-    void init(Reference<RenderingContext>& context);
+    void init(RenderingContext &context);
     void deinit();
     void update();
     void render(Reference <Eagle::CommandBuffer> &commandBuffer);

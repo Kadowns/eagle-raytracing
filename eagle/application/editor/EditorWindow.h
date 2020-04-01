@@ -5,7 +5,7 @@
 #ifndef EAGLE_EDITORWINDOW_H
 #define EAGLE_EDITORWINDOW_H
 
-#include <eagle/raytracer/RaytracerGlobalDefinitions.h>
+#include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
 
 EG_RAYTRACER_BEGIN
 

@@ -5,10 +5,10 @@
 #ifndef EAGLE_EDITORLAYER_H
 #define EAGLE_EDITORLAYER_H
 
-#include <eagle/raytracer/RaytracerGlobalDefinitions.h>
-#include <eagle/raytracer/renderer/RenderLayer.h>
+#include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
+#include <eagle/application/renderer/RenderLayer.h>
 
-#include <eagle/raytracer/editor/EditorMaster.h>
+#include <eagle/application/editor/EditorMaster.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -27,9 +27,9 @@ public:
     virtual void handle_event(Event &e) override;
 
 private:
-    RenderMaster::RenderPassDrawEvent::Listener handle_render_draw_callback;
-    RenderMaster::InitEvent::Listener handle_render_init_callback;
-    RenderMaster::DeinitEvent::Listener handle_render_deinit_callback;
+    RenderMaster::CommandBufferEvent::Listener handle_render_draw_callback;
+    RenderMaster::Event::Listener handle_render_init_callback;
+    RenderMaster::Event::Listener handle_render_deinit_callback;
 private:
     EditorMaster m_editorMaster;
     EventDispatcher m_dispatcher;

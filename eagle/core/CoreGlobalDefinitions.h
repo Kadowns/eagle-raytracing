@@ -14,6 +14,7 @@
 #include <functional>
 #include <utility>
 #include <typeindex>
+#include <any>
 
 #define EG_BEGIN namespace Eagle {
 #define EG_END   }

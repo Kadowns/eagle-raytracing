@@ -145,30 +145,30 @@ define_file_basename_for_sources(eagle_core)
 
 target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent OGLCompiler HLSL SPIRV)
 
-#raytracer-------------------------------------------------
+#application-------------------------------------------------
 
 add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
 add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
 
 set(RAYTRACER_INCLUDE
-        eagle/raytracer/RaytracerGlobalDefinitions.h
-        eagle/raytracer/Raytracer.h
-        eagle/raytracer/renderer/RenderLayer.h
-        eagle/raytracer/renderer/RenderMaster.h
-        eagle/raytracer/editor/EditorMaster.h
-        eagle/raytracer/editor/EditorLayer.h
-        eagle/raytracer/editor/EditorWindow.h
-        eagle/raytracer/editor/FooWindow.h
-        eagle/raytracer/main/MainLayer.h)
+        eagle/application/RaytracerApplicationGlobalDefinitions.h
+        eagle/application/RaytracerApplication.h
+        eagle/application/renderer/RenderLayer.h
+        eagle/application/renderer/RenderMaster.h
+        eagle/application/editor/EditorMaster.h
+        eagle/application/editor/EditorLayer.h
+        eagle/application/editor/EditorWindow.h
+        eagle/application/editor/FooWindow.h
+        eagle/application/raytracer/RaytracerLayer.h eagle/application/raytracer/RaytracerMaster.h eagle/application/EventManager.h eagle/application/EventMaster.h eagle/application/raytracer/Camera.h eagle/application/raytracer/CameraController.h eagle/application/raytracer/Transform.h)
 
 set(RAYTRACER_SOURCE
-        eagle/raytracer/source/renderer/RenderLayer.cpp
-        eagle/raytracer/source/renderer/RenderMaster.cpp
-        eagle/raytracer/source/editor/EditorLayer.cpp
-        eagle/raytracer/source/editor/EditorMaster.cpp
-        eagle/raytracer/source/editor/EditorWindow.cpp
-        eagle/raytracer/source/editor/FooWindow.cpp
-        eagle/raytracer/source/main/MainLayer.cpp)
+        eagle/application/source/renderer/RenderLayer.cpp
+        eagle/application/source/renderer/RenderMaster.cpp
+        eagle/application/source/editor/EditorLayer.cpp
+        eagle/application/source/editor/EditorMaster.cpp
+        eagle/application/source/editor/EditorWindow.cpp
+        eagle/application/source/editor/FooWindow.cpp
+        eagle/application/source/raytracer/RaytracerLayer.cpp eagle/application/source/raytracer/RaytracerMaster.cpp eagle/application/source/raytracer/CameraController.cpp)
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 

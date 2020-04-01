@@ -2,12 +2,12 @@
 // Created by Novak on 22/03/2020.
 //
 
-#include <eagle/raytracer/editor/EditorMaster.h>
+#include <eagle/application/editor/EditorMaster.h>
 #include <imgui/imgui.h>
 
 EG_RAYTRACER_BEGIN
 
-void EditorMaster::init(Reference<RenderingContext> &context) {
+void EditorMaster::init(RenderingContext &context) {
 
     ImGui::CreateContext();
 
@@ -80,7 +80,7 @@ void EditorMaster::init(Reference<RenderingContext> &context) {
                                                pixels + fontCreateInfo.width * fontCreateInfo.height * 4);
 
 
-    m_font = context->create_texture_2d(fontCreateInfo);
+    m_font = context.create_texture_2d(fontCreateInfo);
 
 
     VertexLayout vertexLayout = VertexLayout(5, {
@@ -95,7 +95,7 @@ void EditorMaster::init(Reference<RenderingContext> &context) {
     binding.descriptorType = DescriptorType::SAMPLED_IMAGE_2D;
     binding.binding = 0;
 
-    m_descriptorLayout = context->create_descriptor_set_layout({binding});
+    m_descriptorLayout = context.create_descriptor_set_layout({binding});
 
 
     ShaderPipelineInfo pipelineInfo = ShaderPipelineInfo(vertexLayout);
@@ -104,18 +104,18 @@ void EditorMaster::init(Reference<RenderingContext> &context) {
     pipelineInfo.depthTesting = false;
     pipelineInfo.offscreenRendering = false;
 
-    m_shader = context->create_shader({
+    m_shader = context.create_shader({
                                        {ShaderStage::VERTEX, ProjectRoot + "/shaders/text.vert"},
                                        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/text.frag"},
                                      }, pipelineInfo);
 
-    m_descriptor = context->create_descriptor_set(m_descriptorLayout.lock(), {m_font.lock()->get_image().lock()});
+    m_descriptor = context.create_descriptor_set(m_descriptorLayout.lock(), {m_font.lock()->get_image().lock()});
 
     io.Fonts->TexID = (ImTextureID)&m_descriptor;
 
-    m_vertexBuffer = context->create_vertex_buffer(nullptr, 0, vertexLayout,
+    m_vertexBuffer = context.create_vertex_buffer(nullptr, 0, vertexLayout,
                                                   BufferUsage::DYNAMIC);
-    m_indexBuffer = context->create_index_buffer(nullptr, 0, IndexBufferType::UINT_16,
+    m_indexBuffer = context.create_index_buffer(nullptr, 0, IndexBufferType::UINT_16,
                                                 BufferUsage::DYNAMIC);
 
 
