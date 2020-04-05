@@ -19,12 +19,13 @@
 #include "VulkanUniformBuffer.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanDescriptorSetLayout.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanRenderTarget.h"
 #include "VulkanCommand.h"
 #include "VulkanCommandList.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanComputeShader.h"
+#include "VulkanStorageBuffer.h"
 
 EG_BEGIN
 
@@ -165,16 +166,20 @@ public:
     create_descriptor_set(const Reference<DescriptorSetLayout> &descriptorLayout,
                           const std::vector<Reference<DescriptorItem>> &descriptorItems) override;
 
-    virtual Handle<Texture2D>
-    create_texture_2d(const Texture2DCreateInfo &createInfo) override;
+    virtual Handle<Texture>
+    create_texture(const TextureCreateInfo &createInfo) override;
 
     virtual Handle<RenderTarget>
-    create_render_target(const std::vector<RENDER_TARGET_ATTACHMENT> &attachments) override;
+    create_render_target(const std::vector<RenderTargetAttachment> &attachments) override;
+
+    virtual Handle <StorageBuffer> create_storage_buffer(size_t size, void *data, BufferUsage usage) override;
 
     virtual Handle<ComputeShader>
     create_compute_shader(const std::string& path) override;
 
-    virtual void destroy_texture_2d(const Reference<Texture2D> &texture) override;
+    virtual void destroy_texture_2d(const Reference<Texture> &texture) override;
+
+    virtual void destroy_render_target(const Reference<RenderTarget> &renderTarget) override;
 
 private:
 
@@ -218,11 +223,12 @@ protected:
     std::vector<Reference<VulkanVertexBuffer>> m_vertexBuffers;
     std::vector<Reference<VulkanIndexBuffer>> m_indexBuffers;
     std::vector<Reference<VulkanUniformBuffer>> m_uniformBuffers;
+    std::vector<Reference<VulkanStorageBuffer>> m_storageBuffers;
     std::vector<Reference<VulkanDescriptorSet>> m_descriptorSets;
     std::vector<Reference<VulkanDescriptorSetLayout>> m_descriptorSetsLayouts;
     std::vector<Reference<VulkanShader>> m_shaders;
     std::vector<Reference<VulkanComputeShader>> m_computeShaders;
-    std::vector<Reference<VulkanTexture2D>> m_textures;
+    std::vector<Reference<VulkanTexture>> m_textures;
     std::vector<Reference<VulkanCustomRenderTarget>> m_renderTargets;
 
     uint32_t m_currentFrame = 0;

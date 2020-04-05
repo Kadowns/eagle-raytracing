@@ -13,8 +13,6 @@ EG_BEGIN
 
 
 struct ShaderPipelineInfo {
-    ShaderPipelineInfo(const VertexLayout& layout) : vertexLayout(layout) {}
-
     bool blendEnable;
     bool depthTesting;
     bool dynamicStates;

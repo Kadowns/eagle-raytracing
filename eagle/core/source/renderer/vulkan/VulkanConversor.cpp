@@ -512,8 +512,9 @@ VkDescriptorType VulkanConversor::to_vk(DescriptorType type) {
     VkDescriptorType result;
     switch(type){
         case DescriptorType::UNIFORM_BUFFER: result = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; break;
-        case DescriptorType::SAMPLED_IMAGE_2D: result = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; break;
-        case DescriptorType::STORAGE_IMAGE_2D: result = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; break;
+        case DescriptorType::SAMPLED_IMAGE: result = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; break;
+        case DescriptorType::STORAGE_IMAGE: result = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; break;
+        case DescriptorType::STORAGE_BUFFER: result = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; break;
     }
     return result;
 }
@@ -521,9 +522,10 @@ VkDescriptorType VulkanConversor::to_vk(DescriptorType type) {
 DescriptorType VulkanConversor::to_eg(VkDescriptorType type) {
     DescriptorType result;
     switch(type){
-        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: result = DescriptorType::SAMPLED_IMAGE_2D; break;
+        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: result = DescriptorType::SAMPLED_IMAGE; break;
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: result = DescriptorType::UNIFORM_BUFFER; break;
-        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: result = DescriptorType::STORAGE_IMAGE_2D; break;
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: result = DescriptorType::STORAGE_IMAGE; break;
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: result = DescriptorType::STORAGE_BUFFER; break;
         default: throw std::runtime_error("Invalid VkDescriptorType (not yet supported!)");
     }
     return result;

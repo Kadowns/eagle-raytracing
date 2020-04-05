@@ -927,6 +927,10 @@ void VulkanContext::recreate_swapchain() {
         uniformBuffer->create_uniform_buffer();
     }
 
+    for (auto& storageBuffer : m_storageBuffers){
+        storageBuffer->create_storage_buffer();
+    }
+
     for (auto &descriptorSet : m_descriptorSets) {
         descriptorSet->create_descriptor_sets();
         descriptorSet->update_descriptor_sets();
@@ -958,6 +962,10 @@ void VulkanContext::cleanup_swapchain() {
 
     for (auto &uniformBuffer : m_uniformBuffers) {
         uniformBuffer->cleanup();
+    }
+
+    for (auto& storageBuffer : m_storageBuffers){
+        storageBuffer->cleanup();
     }
 
     for (auto &shader : m_shaders) {
@@ -1041,6 +1049,19 @@ VulkanContext::create_uniform_buffer(size_t size, void *data) {
     return m_uniformBuffers.back();
 }
 
+Handle<StorageBuffer>
+VulkanContext::create_storage_buffer(size_t size, void *data, BufferUsage usage) {
+    EG_CORE_TRACE("Creating a vulkan storage buffer!");
+    VulkanStorageBufferCreateInfo createInfo = {};
+    createInfo.device = m_device;
+    createInfo.physicalDevice = m_physicalDevice;
+    createInfo.bufferCount = m_present.imageCount;
+    createInfo.commandPool = m_graphicsCommandPool;
+    createInfo.graphicsQueue = m_graphicsQueue;
+    m_storageBuffers.emplace_back(std::make_shared<VulkanStorageBuffer>(createInfo, size, data, usage));
+    return m_storageBuffers.back();
+}
+
 
 Handle<DescriptorSetLayout>
 VulkanContext::create_descriptor_set_layout(const std::vector<DescriptorBindingDescription> &bindings) {
@@ -1066,22 +1087,22 @@ VulkanContext::create_descriptor_set(const Reference<DescriptorSetLayout>& descr
     return m_descriptorSets.back();
 }
 
-Handle<Texture2D>
-VulkanContext::create_texture_2d(const Texture2DCreateInfo &createInfo) {
+Handle<Texture>
+VulkanContext::create_texture(const TextureCreateInfo &createInfo) {
 
     EG_CORE_TRACE("Creating a vulkan texture!");
-    VulkanTexture2DCreateInfo vulkanTextureCreateInfo = {};
+    VulkanTextureCreateInfo vulkanTextureCreateInfo = {};
     vulkanTextureCreateInfo.device = m_device;
     vulkanTextureCreateInfo.physicalDevice = m_physicalDevice;
     vulkanTextureCreateInfo.commandPool = m_graphicsCommandPool;
     vulkanTextureCreateInfo.graphicsQueue = m_graphicsQueue;
 
-    m_textures.emplace_back(std::make_shared<VulkanTexture2D>(createInfo, vulkanTextureCreateInfo));
+    m_textures.emplace_back(std::make_shared<VulkanTexture>(createInfo, vulkanTextureCreateInfo));
     return m_textures.back();
 }
 
 Handle<RenderTarget>
-VulkanContext::create_render_target(const std::vector<RENDER_TARGET_ATTACHMENT> &attachments) {
+VulkanContext::create_render_target(const std::vector<RenderTargetAttachment> &attachments) {
 
     VulkanRenderTargetCreateInfo createInfo = {};
     createInfo.device = m_device;
@@ -1225,13 +1246,20 @@ const Reference<RenderTarget> VulkanContext::main_render_target() {
     return m_present.renderTargets[m_present.imageIndex];
 }
 
-void VulkanContext::destroy_texture_2d(const Reference<Texture2D> &texture) {
-    m_textures.erase(std::find(m_textures.begin(), m_textures.end(), std::static_pointer_cast<VulkanTexture2D>(texture)));
+void VulkanContext::destroy_texture_2d(const Reference<Texture> &texture) {
+    m_textures.erase(std::find(m_textures.begin(), m_textures.end(), std::static_pointer_cast<VulkanTexture>(texture)));
+}
+
+void VulkanContext::destroy_render_target(const Reference<RenderTarget> &renderTarget) {
+    m_renderTargets.erase(std::find(m_renderTargets.begin(), m_renderTargets.end(), std::static_pointer_cast<VulkanRenderTarget>(renderTarget)));
 }
 
 void VulkanContext::set_recreation_callback(std::function<void()> recreation_callback) {
     this->recreation_callback = recreation_callback;
 }
+
+
+
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
                                       const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,

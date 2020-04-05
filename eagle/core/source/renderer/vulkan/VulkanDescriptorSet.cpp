@@ -1,3 +1,4 @@
+#include <eagle/core/renderer/vulkan/VulkanStorageBuffer.h>
 #include "eagle/core/renderer/vulkan/VulkanDescriptorSet.h"
 #include "eagle/core/renderer/vulkan/VulkanImage.h"
 
@@ -94,7 +95,16 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 bufferInfos.push_back(bufferInfo);
                 break;
             }
-            case DescriptorType::SAMPLED_IMAGE_2D:{
+            case DescriptorType::STORAGE_BUFFER:{
+                auto buffer = std::static_pointer_cast<VulkanStorageBuffer>(m_descriptorItems[j]);
+                VkDescriptorBufferInfo bufferInfo = {};
+                bufferInfo.buffer = buffer->get_buffers()[index]->get_native_buffer();
+                bufferInfo.offset = 0;
+                bufferInfo.range = buffer->size();
+                bufferInfos.push_back(bufferInfo);
+                break;
+            }
+            case DescriptorType::SAMPLED_IMAGE:{
                 auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
                 VkDescriptorImageInfo imageInfo = {};
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -103,7 +113,7 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 imageInfos.push_back(imageInfo);
                 break;
             }
-            case DescriptorType::STORAGE_IMAGE_2D:{
+            case DescriptorType::STORAGE_IMAGE:{
                 auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
                 VkDescriptorImageInfo imageInfo = {};
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -126,12 +136,13 @@ void VulkanDescriptorSet::flush(uint32_t index) {
         descriptorWrite[j].dstArrayElement = 0;
         descriptorWrite[j].descriptorType = descriptorBindings[j].descriptorType;
         descriptorWrite[j].descriptorCount = 1;
-        if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+        if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+            descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER){
             descriptorWrite[j].pBufferInfo = &bufferInfos[bufferIndex];
             bufferIndex++;
         }
-        else if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-              || descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
+        else if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ||
+                 descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
             descriptorWrite[j].pImageInfo = &imageInfos[imageIndex];
             imageIndex++;
         }

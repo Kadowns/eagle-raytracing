@@ -27,7 +27,7 @@ public:
 
 private:
 
-    EventDispatcher m_dispatcher;
+    LayerEventDispatcher m_dispatcher;
 };
 
 EG_END

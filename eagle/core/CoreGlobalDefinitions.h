@@ -5,12 +5,14 @@
 #ifndef EAGLE_COREGLOBALDEFINITIONS_H
 #define EAGLE_COREGLOBALDEFINITIONS_H
 
-#include <memory>
+#include <queue>
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include <set>
+#include <memory>
 
+#include <random>
 #include <functional>
 #include <utility>
 #include <typeindex>

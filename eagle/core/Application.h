@@ -5,8 +5,7 @@
 #ifndef EAGLE_APPLICATION_H
 #define EAGLE_APPLICATION_H
 
-#include <memory>
-#include <queue>
+
 
 #include "CoreGlobalDefinitions.h"
 #include "LayerStack.h"

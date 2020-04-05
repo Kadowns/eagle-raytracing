@@ -13,10 +13,11 @@
 #include "UniformBuffer.h"
 #include "DescriptorSet.h"
 #include "DescriptorSetLayout.h"
-#include "Texture2D.h"
+#include "Texture.h"
 #include "RenderTarget.h"
 #include "CommandBuffer.h"
 #include "ComputeShader.h"
+#include "StorageBuffer.h"
 
 EG_BEGIN
 
@@ -53,6 +54,9 @@ public:
     virtual Handle<UniformBuffer>
     create_uniform_buffer(size_t size, void *data) = 0;
 
+    virtual Handle <StorageBuffer>
+    create_storage_buffer(size_t size, void *data, BufferUsage usage) = 0;
+
     virtual Handle<DescriptorSetLayout>
     create_descriptor_set_layout(const std::vector<DescriptorBindingDescription> &bindings) = 0;
 
@@ -60,17 +64,20 @@ public:
     create_descriptor_set(const Reference<DescriptorSetLayout> &descriptorLayout,
                           const std::vector<Reference<DescriptorItem>> &descriptorItems) = 0;
 
-    virtual Handle<Texture2D>
-    create_texture_2d(const Texture2DCreateInfo &createInfo) = 0;
+    virtual Handle<Texture>
+    create_texture(const TextureCreateInfo &createInfo) = 0;
 
     virtual Handle<RenderTarget>
-    create_render_target(const std::vector<RENDER_TARGET_ATTACHMENT> &attachments) = 0;
+    create_render_target(const std::vector<RenderTargetAttachment> &attachments) = 0;
 
     virtual Handle<ComputeShader>
     create_compute_shader(const std::string& path) = 0;
 
     virtual void
-    destroy_texture_2d(const Reference<Texture2D>& texture) = 0;
+    destroy_texture_2d(const Reference<Texture>& texture) = 0;
+
+    virtual void
+    destroy_render_target(const Reference<RenderTarget>& renderTarget) = 0;
 
 };
 

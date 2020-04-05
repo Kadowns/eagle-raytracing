@@ -1,16 +1,7 @@
 #version 450
 
 const float infinity = 1. / 0.;
-
-layout (local_size_x = 8, local_size_y = 8) in;
-
-layout (binding = 0, rgba8) uniform image2D resultImage;
-
-layout (binding = 1) uniform Camera {
-    mat4 view;
-    mat4 inverseProjection;
-    vec3 position;
-} uCamera;
+const float PI = 3.14159265f;
 
 struct Ray {
     vec3 origin;
@@ -22,13 +13,48 @@ struct RayHit {
     vec3 position;
     float distance;
     vec3 normal;
+    vec3 albedo;
+    vec3 specular;
 };
+
+struct Camera {
+    mat4 view;
+    mat4 inverseProjection;
+    vec3 position;
+};
+
+struct Sphere {
+    vec3 position;
+    float radius;
+    vec3 albedo;
+    vec3 specular;
+};
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (binding = 0, rgba8) uniform image2D resultImage;
+
+layout (binding = 1) uniform Ubo {
+    Camera camera;
+    vec2 pixelOffset;
+    vec4 light;
+    float sampleIndex;
+    int sphereCount;
+} ubo;
+
+layout (std140, binding = 2) buffer Scene {
+    Sphere[] spheres;
+} uScene;
+
+layout (binding = 3) uniform sampler2D uSkybox;
 
 RayHit CreateRayHit() {
     RayHit hit;
-    hit.position = vec3(0.0f, 0.0f, 0.0f);
+    hit.position = vec3(0);
     hit.distance = infinity;
-    hit.normal = vec3(0.0f, 0.0f, 0.0f);
+    hit.normal = vec3(0);
+    hit.albedo = vec3(0);
+    hit.specular = vec3(0);
     return hit;
 }
 
@@ -42,12 +68,12 @@ Ray CreateRay(vec3 origin, vec3 direction) {
 
 Ray CreateCameraRay(vec2 uv) {
     // Transform the camera origin to world space
-    vec3 origin = uCamera.position;
+    vec3 origin = ubo.camera.position;
 
     // Invert the perspective projection of the view-space position
-    vec3 direction = (uCamera.inverseProjection * vec4(uv, 0.0f, 1.0f)).xyz;
+    vec3 direction = (ubo.camera.inverseProjection * vec4(uv, 0.0f, 1.0f)).xyz;
     // Transform the direction from camera to world space and normalize
-    direction = normalize((vec4(direction, 0.0f) * uCamera.view).xyz);
+    direction = normalize((vec4(direction, 0.0f) * ubo.camera.view).xyz);
     return CreateRay(origin, direction);
 }
 
@@ -58,56 +84,74 @@ void IntersectGroundPlane(Ray ray, inout RayHit bestHit) {
         bestHit.distance = t;
         bestHit.position = ray.origin + t * ray.direction;
         bestHit.normal = vec3(0.0f, 1.0f, 0.0f);
+        bestHit.albedo = vec3(0.1f);
+        bestHit.specular = vec3(0.04f);
     }
 }
 
-void IntersectSphere(Ray ray, inout RayHit bestHit, vec4 sphere)
-{
+
+void IntersectSphere(Ray ray, inout RayHit bestHit, Sphere sphere) {
     // Calculate distance along the ray where the sphere is intersected
-    vec3 d = ray.origin - sphere.xyz;
+    vec3 d = ray.origin - sphere.position;
     float p1 = -dot(ray.direction, d);
-    float p2sqr = p1 * p1 - dot(d, d) + sphere.w * sphere.w;
+    float p2sqr = p1 * p1 - dot(d, d) + sphere.radius * sphere.radius;
     if (p2sqr < 0)
-    return;
+        return;
     float p2 = sqrt(p2sqr);
     float t = p1 - p2 > 0 ? p1 - p2 : p1 + p2;
     if (t > 0 && t < bestHit.distance) {
         bestHit.distance = t;
         bestHit.position = ray.origin + t * ray.direction;
-        bestHit.normal = normalize(bestHit.position - sphere.xyz);
+        bestHit.normal = normalize(bestHit.position - sphere.position);
+        bestHit.albedo = sphere.albedo;
+        bestHit.specular = sphere.specular;
     }
 }
 
 RayHit Trace(Ray ray) {
     RayHit bestHit = CreateRayHit();
     IntersectGroundPlane(ray, bestHit);
-    IntersectSphere(ray, bestHit, vec4(-4, 8.0f, -10, 8.0f));
-    IntersectSphere(ray, bestHit, vec4(12, 3.0f, -10, 3.0f));
+
+    for (int i = 0; i < ubo.sphereCount; i++){
+        IntersectSphere(ray, bestHit, uScene.spheres[i]);
+    }
     return bestHit;
 }
 
 vec3 Shade(inout Ray ray, RayHit hit) {
     if (hit.distance < infinity) {
-        vec3 specular = vec3(0.6f, 0.6f, 0.6f);
-        // Reflect the ray and multiply energy with specular reflection
         ray.origin = hit.position + hit.normal * 0.001f;
         ray.direction = reflect(ray.direction, hit.normal);
-        ray.energy *= specular;
-        // Return nothing
-        return vec3(0.0f, 0.0f, 0.0f);
+        ray.energy *= hit.specular;
+
+        // Shadow test ray
+        Ray shadowRay = CreateRay(hit.position + hit.normal * 0.001f, -1 * ubo.light.xyz);
+        RayHit shadowHit = Trace(shadowRay);
+        if (shadowHit.distance != infinity){
+            return vec3(0.0f, 0.0f, 0.0f);
+        }
+
+        // Return a diffuse-shaded color
+        return clamp(dot(hit.normal, ubo.light.xyz) * -1, 0.0f, 1.0f) * ubo.light.w * hit.albedo;
     }
     else {
         ray.energy = vec3(0);
-        return vec3(ray.direction * 0.5f + 0.5f);
+
+        float theta = acos(ray.direction.y) / PI;
+        float phi = atan(ray.direction.x, -ray.direction.z) / -PI * 0.5f;
+        return pow(texture(uSkybox, vec2(phi, theta)).xyz, vec3(2.2));
     }
 }
 
+vec4 blend(vec4 src, vec4 dst){
+    return vec4(src.rgb * src.a + dst.rgb * (1 - src.a), 1 - src.a);
+}
 
 void main() {
     ivec2 texSize = imageSize(resultImage);
     ivec2 id = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
-    vec2 uv = vec2((id.xy + vec2(0.5f)) / vec2(texSize.x, texSize.y) * 2.0f - 1.0f);
+    vec2 uv = vec2((id.xy + ubo.pixelOffset) / vec2(texSize.x, texSize.y) * 2.0f - 1.0f);
 
     Ray ray = CreateCameraRay(uv);
 
@@ -118,6 +162,6 @@ void main() {
         if (ray.energy == vec3(0))
             break;
     }
-
-    imageStore(resultImage, id, vec4(result, 1.0f));
+    vec4 dst = imageLoad(resultImage, id);
+    imageStore(resultImage, id, blend(vec4(result, 1.0f / (ubo.sampleIndex + 1.0f)), dst));
 }

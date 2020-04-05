@@ -23,7 +23,7 @@ public:
 
 private:
     RenderMaster m_renderMaster;
-    EventDispatcher m_dispatcher;
+    LayerEventDispatcher m_dispatcher;
 };
 
 

@@ -10,10 +10,11 @@
 
 EG_BEGIN
 
-enum class DescriptorType{
+enum class DescriptorType {
     UNIFORM_BUFFER = 0,
-    SAMPLED_IMAGE_2D = 1,
-    STORAGE_IMAGE_2D = 2
+    STORAGE_BUFFER = 1,
+    SAMPLED_IMAGE = 2,
+    STORAGE_IMAGE = 3
 };
 
 enum class BufferUsage {

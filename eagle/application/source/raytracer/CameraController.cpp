@@ -9,7 +9,8 @@ EG_RAYTRACER_BEGIN
 void CameraController::init() {
     auto& window = Application::instance().window();
     m_camera.set_projection(70.0f, window.get_width() / (float)window.get_height());
-    m_originalRotation = m_transform.rotation;
+    m_transform.set_position(glm::vec3(0, 10, 30));
+    m_originalRotation = m_transform.rotation();
 }
 
 void CameraController::update() {
@@ -45,7 +46,7 @@ void CameraController::update() {
         direction += m_transform.right();
     }
 
-     m_transform.position += m_speed * time * direction;
+     m_transform.translate(m_speed * time * direction);
 
     if (Input::instance().mouse_button_pressed(EG_MOUSE_BUTTON_LEFT)) {
         m_dragging = true;
@@ -68,6 +69,7 @@ void CameraController::update() {
     m_rotArrayX.emplace_back(m_rotationX);
     m_rotArrayY.emplace_back(m_rotationY);
 
+    m_frameCounter = m_frameCounterTime / time;
 
     if (m_rotArrayX.size() >= m_frameCounter) {
         m_rotArrayX.erase(m_rotArrayX.begin());
@@ -92,8 +94,8 @@ void CameraController::update() {
     glm::quat xQuat = glm::angleAxis(glm::radians(m_rotAverageX), glm::vec3(0, 1, 0));
     glm::quat yQuat = glm::angleAxis(glm::radians(m_rotAverageY), glm::vec3(-1, 0, 0));
 
-    m_transform.rotation = m_originalRotation * xQuat * yQuat;
-    m_transform.rotation = glm::normalize(m_transform.rotation);
+    m_transform.set_rotation(m_originalRotation * xQuat * yQuat);
+    m_transform.set_rotation(glm::normalize(m_transform.rotation()));
     apply_transform_on_camera(m_transform, m_camera);
 }
 
@@ -113,7 +115,7 @@ float CameraController::clamp_angle(float angle, float min, float max) {
 }
 
 void CameraController::apply_transform_on_camera(const Transform &transform, Camera &camera) {
-    camera.set_view(transform.position, transform.position + transform.front(), transform.up());
+    camera.set_view(transform.position(), transform.position() + transform.front(), transform.up());
 }
 
 EG_RAYTRACER_END

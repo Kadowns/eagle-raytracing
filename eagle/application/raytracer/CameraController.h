@@ -34,7 +34,8 @@ private:
     float m_maximumX = 360.0f;
     float m_minimumY = -80.0f;
     float m_maximumY = 90.0f;
-    float m_frameCounter = 120;
+    float m_frameCounterTime = 0.1f;
+    float m_frameCounter;
 
     std::vector<float> m_rotArrayX;
     std::vector<float> m_rotArrayY;

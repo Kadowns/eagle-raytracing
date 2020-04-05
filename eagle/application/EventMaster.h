@@ -6,19 +6,20 @@
 #define EAGLE_EVENTMASTER_H
 
 #include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
-#include <eagle/application/EventManager.h>
+#include <eagle/application/editor/EditorWindow.h>
+#include <eagle/core/events/EventDispatcher.h>
 
 EG_RAYTRACER_BEGIN
 
 struct OnRaytracerTargetCreated {
-    OnRaytracerTargetCreated(const Reference<Texture2D> target) : target(target) {}
-    Reference<Texture2D> target;
+    OnRaytracerTargetCreated(const Reference<Image> target) : target(target) {}
+    Reference<Image> target;
 };
 
 class EventMaster {
 public:
-    static EventManager& instance(){
-        static EventManager s_instance;
+    static EventDispatcher& instance(){
+        static EventDispatcher s_instance;
         return s_instance;
     }
 };

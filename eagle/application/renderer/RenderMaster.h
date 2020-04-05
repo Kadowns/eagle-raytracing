@@ -25,32 +25,17 @@ public:
 
     inline static RenderingContext& context() { return *s_context; }
 public:
-    static Event handle_render_init;
-    static Event handle_render_deinit;
+    static Event handle_context_init;
+    static Event handle_context_deinit;
     static Event handle_frame_begin;
     static Event handle_frame_end;
     static Event handle_context_recreated;
     static CommandBufferEvent handle_command_buffer_begin;
     static CommandBufferEvent handle_command_buffer_end;
     static CommandBufferEvent handle_command_buffer_main_render_pass;
-private:
-    void init_graphics();
 
 private:
     static Reference<RenderingContext> s_context;
-
-    std::function<void(const OnRaytracerTargetCreated&)> raytracer_target_created_callback;
-
-    struct {
-        uint32_t width, height;
-    } screen;
-
-    struct {
-        Handle<Shader> shader;
-        Handle<VertexBuffer> vertexBuffer;
-        Handle<IndexBuffer> indexBuffer;
-        Handle<DescriptorSet> descriptorSet;
-    } graphics;
 };
 
 EG_RAYTRACER_END

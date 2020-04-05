@@ -34,11 +34,12 @@ set(CORE_INCLUDE
         eagle/core/Layer.h
         eagle/core/LayerStack.h
         eagle/core/events/Event.h
+        eagle/core/events/EventDispatcher.h
         eagle/core/events/WindowEvents.h
         eagle/core/events/InputEvents.h
         eagle/core/events/KeyCodes.h
         eagle/core/InputLayer.h
-        eagle/core/events/ImmediateEvent.h)
+        eagle/core/events/ImmediateEvent.h eagle/core/Random.h)
 
 set(CORE_SOURCE
         eagle/core/source/CoreGlobalDefinitions.cpp
@@ -49,7 +50,7 @@ set(CORE_SOURCE
         eagle/core/source/LayerStack.cpp
         eagle/core/source/Input.cpp
         eagle/core/source/InputLayer.cpp
-        )
+        eagle/core/source/Random.cpp)
 
 
 set(CORE_ALL ${CORE_INCLUDE} ${CORE_SOURCE})
@@ -64,13 +65,14 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/IndexBuffer.h
         eagle/core/renderer/UniformBuffer.h
         eagle/core/renderer/DescriptorSet.h
-        eagle/core/renderer/Texture2D.h
+        eagle/core/renderer/Texture.h
         eagle/core/renderer/Image.h
         eagle/core/renderer/RenderTarget.h
         eagle/core/renderer/DescriptorItem.h
         eagle/core/renderer/DescriptorSetLayout.h
         eagle/core/renderer/CommandBuffer.h
         eagle/core/renderer/ComputeShader.h
+        eagle/core/renderer/StorageBuffer.h
         eagle/core/renderer/vulkan/VulkanContext.h
         eagle/core/renderer/vulkan/VulkanCore.h
         eagle/core/renderer/vulkan/VulkanHelper.h
@@ -81,7 +83,7 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanIndexBuffer.h
         eagle/core/renderer/vulkan/VulkanUniformBuffer.h
         eagle/core/renderer/vulkan/VulkanDescriptorSet.h
-        eagle/core/renderer/vulkan/VulkanTexture2D.h
+        eagle/core/renderer/vulkan/VulkanTexture.h
         eagle/core/renderer/vulkan/VulkanImage.h
         eagle/core/renderer/vulkan/VulkanRenderTarget.h
         eagle/core/renderer/vulkan/VulkanCommand.h
@@ -93,10 +95,10 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanCleaner.h
         eagle/core/renderer/vulkan/VulkanComputeShader.h
         eagle/core/renderer/vulkan/VulkanShaderUtils.h
+        eagle/core/renderer/vulkan/VulkanStorageBuffer.h
         )
 
 set(RENDERER_SOURCE
-        eagle/core/source/renderer/UniformBuffer.cpp
         eagle/core/source/renderer/DescriptorSet.cpp
         eagle/core/source/renderer/VertexLayout.cpp
         eagle/core/source/renderer/vulkan/VulkanContext.cpp
@@ -110,7 +112,7 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanUniformBuffer.cpp
         eagle/core/source/renderer/vulkan/VulkanDescriptorSet.cpp
         eagle/core/source/renderer/vulkan/VulkanDescriptorSetLayout.cpp
-        eagle/core/source/renderer/vulkan/VulkanTexture2D.cpp
+        eagle/core/source/renderer/vulkan/VulkanTexture.cpp
         eagle/core/source/renderer/vulkan/VulkanRenderTarget.cpp
         eagle/core/source/renderer/vulkan/spirv_reflect.cpp
         eagle/core/source/renderer/vulkan/VulkanConversor.cpp
@@ -118,6 +120,7 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanCleaner.cpp
         eagle/core/source/renderer/vulkan/VulkanComputeShader.cpp
         eagle/core/source/renderer/vulkan/VulkanShaderUtils.cpp
+        eagle/core/source/renderer/vulkan/VulkanStorageBuffer.cpp
         )
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})
@@ -149,26 +152,39 @@ target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent 
 
 add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
 add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
+add_subdirectory(${EG_EXTERNAL_PATH}/stb ${CMAKE_BINARY_DIR}/stb)
 
 set(RAYTRACER_INCLUDE
+        eagle/application/EventMaster.h
         eagle/application/RaytracerApplicationGlobalDefinitions.h
         eagle/application/RaytracerApplication.h
         eagle/application/renderer/RenderLayer.h
         eagle/application/renderer/RenderMaster.h
+        eagle/application/renderer/TextureLoader.h
         eagle/application/editor/EditorMaster.h
         eagle/application/editor/EditorLayer.h
         eagle/application/editor/EditorWindow.h
-        eagle/application/editor/FooWindow.h
-        eagle/application/raytracer/RaytracerLayer.h eagle/application/raytracer/RaytracerMaster.h eagle/application/EventManager.h eagle/application/EventMaster.h eagle/application/raytracer/Camera.h eagle/application/raytracer/CameraController.h eagle/application/raytracer/Transform.h)
+        eagle/application/editor/ComputeDataEditor.h
+        eagle/application/raytracer/RaytracerLayer.h
+        eagle/application/raytracer/RaytracerMaster.h
+        eagle/application/raytracer/Camera.h
+        eagle/application/raytracer/CameraController.h
+        eagle/application/raytracer/Transform.h
+        eagle/application/raytracer/ComputeData.h
+        )
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
         eagle/application/source/renderer/RenderMaster.cpp
+        eagle/application/source/renderer/TextureLoader.cpp
         eagle/application/source/editor/EditorLayer.cpp
         eagle/application/source/editor/EditorMaster.cpp
         eagle/application/source/editor/EditorWindow.cpp
-        eagle/application/source/editor/FooWindow.cpp
-        eagle/application/source/raytracer/RaytracerLayer.cpp eagle/application/source/raytracer/RaytracerMaster.cpp eagle/application/source/raytracer/CameraController.cpp)
+        eagle/application/source/editor/ComputeDataEditor.cpp
+        eagle/application/source/raytracer/RaytracerLayer.cpp
+        eagle/application/source/raytracer/RaytracerMaster.cpp
+        eagle/application/source/raytracer/CameraController.cpp
+        )
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 
@@ -189,7 +205,7 @@ set_target_properties(
 
 define_file_basename_for_sources(eagle_raytracer)
 
-target_link_libraries(eagle_raytracer eagle_core imgui glm)
+target_link_libraries(eagle_raytracer eagle_core imgui glm stb)
 #-----------------------------------------------------
 
 add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h)

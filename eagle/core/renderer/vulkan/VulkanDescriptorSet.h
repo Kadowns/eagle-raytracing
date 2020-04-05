@@ -5,7 +5,7 @@
 #include "VulkanCore.h"
 #include "VulkanShader.h"
 #include "VulkanUniformBuffer.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanCleaner.h"
 
 EG_BEGIN

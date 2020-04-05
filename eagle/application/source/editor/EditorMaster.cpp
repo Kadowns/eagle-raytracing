@@ -7,8 +7,37 @@
 
 EG_RAYTRACER_BEGIN
 
-void EditorMaster::init(RenderingContext &context) {
+std::vector<Reference<EditorWindow>> EditorMaster::m_windows;
+bool EditorMaster::m_updateWindows;
 
+EditorMaster::EditorMaster() {
+    handle_context_init_callback = [&](){
+        handle_context_init(RenderMaster::context());
+    };
+
+    handle_command_buffer_main_render_pass_callback = [&](Reference<CommandBuffer>& commandBuffer){
+        handle_command_buffer_main_render_pass(commandBuffer);
+    };
+}
+
+EditorMaster::~EditorMaster() {
+
+}
+
+void EditorMaster::init() {
+    RenderMaster::handle_context_init += &handle_context_init_callback;
+    RenderMaster::handle_command_buffer_main_render_pass += &handle_command_buffer_main_render_pass_callback;
+
+    init_imgui();
+}
+
+void EditorMaster::deinit() {
+    RenderMaster::handle_context_init -= &handle_context_init_callback;
+    RenderMaster::handle_command_buffer_main_render_pass -= &handle_command_buffer_main_render_pass_callback;
+    ImGui::DestroyContext();
+}
+
+void EditorMaster::init_imgui() {
     ImGui::CreateContext();
 
     ImGuiStyle &style = ImGui::GetStyle();
@@ -68,9 +97,15 @@ void EditorMaster::init(RenderingContext &context) {
     io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+}
 
+
+void EditorMaster::handle_context_init(RenderingContext &context) {
+
+
+    ImGuiIO &io = ImGui::GetIO();
     Pixel *pixels;
-    Texture2DCreateInfo fontCreateInfo = {};
+    TextureCreateInfo fontCreateInfo = {};
     io.Fonts->GetTexDataAsRGBA32(&pixels, &fontCreateInfo.width, &fontCreateInfo.height);
     fontCreateInfo.format = Format::R8G8B8A8_UNORM;
     fontCreateInfo.filter = Filter::LINEAR;
@@ -80,7 +115,7 @@ void EditorMaster::init(RenderingContext &context) {
                                                pixels + fontCreateInfo.width * fontCreateInfo.height * 4);
 
 
-    m_font = context.create_texture_2d(fontCreateInfo);
+    m_font = context.create_texture(fontCreateInfo);
 
 
     VertexLayout vertexLayout = VertexLayout(5, {
@@ -92,13 +127,14 @@ void EditorMaster::init(RenderingContext &context) {
 
     DescriptorBindingDescription binding = {};
     binding.shaderStage = ShaderStage::FRAGMENT;
-    binding.descriptorType = DescriptorType::SAMPLED_IMAGE_2D;
+    binding.descriptorType = DescriptorType::SAMPLED_IMAGE;
     binding.binding = 0;
 
     m_descriptorLayout = context.create_descriptor_set_layout({binding});
 
 
-    ShaderPipelineInfo pipelineInfo = ShaderPipelineInfo(vertexLayout);
+    ShaderPipelineInfo pipelineInfo = {};
+    pipelineInfo.vertexLayout = vertexLayout;
     pipelineInfo.blendEnable = true;
     pipelineInfo.dynamicStates = true;
     pipelineInfo.depthTesting = false;
@@ -118,11 +154,6 @@ void EditorMaster::init(RenderingContext &context) {
     m_indexBuffer = context.create_index_buffer(nullptr, 0, IndexBufferType::UINT_16,
                                                 BufferUsage::DYNAMIC);
 
-
-}
-
-void EditorMaster::deinit() {
-    ImGui::DestroyContext();
 }
 
 void EditorMaster::update() {
@@ -139,7 +170,7 @@ void EditorMaster::update() {
     }
 }
 
-void EditorMaster::render(Reference<CommandBuffer> &commandBuffer) {
+void EditorMaster::handle_command_buffer_main_render_pass(Reference<CommandBuffer> &commandBuffer) {
 
     ImGuiIO &io = ImGui::GetIO();
     ImDrawData *imDrawData = ImGui::GetDrawData();
@@ -195,14 +226,14 @@ bool EditorMaster::handle_mouse_moved(MouseMoveEvent &e) {
     m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(e.get_x(), e.get_y());
-    return false;
+    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
 bool EditorMaster::handle_mouse_button(MouseButtonEvent &e) {
     m_updateWindows = true;
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[e.get_key()] = e.get_action() == EG_PRESS || e.get_action() == EG_REPEAT;
-    return false;
+    return ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 }
 
 bool EditorMaster::handle_mouse_scrolled(MouseScrolledEvent &e) {
@@ -210,7 +241,7 @@ bool EditorMaster::handle_mouse_scrolled(MouseScrolledEvent &e) {
     ImGuiIO &io = ImGui::GetIO();
     io.MouseWheel = e.get_y();
     io.MouseWheelH = e.get_x();
-    return false;
+    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
 bool EditorMaster::handle_key(KeyEvent &e) {
@@ -224,14 +255,14 @@ bool EditorMaster::handle_key(KeyEvent &e) {
     io.KeyShift = io.KeysDown[EG_KEY_LEFT_SHIFT] || io.KeysDown[EG_KEY_RIGHT_SHIFT];
     io.KeyAlt = io.KeysDown[EG_KEY_LEFT_ALT] || io.KeysDown[EG_KEY_RIGHT_ALT];
     io.KeySuper = io.KeysDown[EG_KEY_LEFT_SUPER] || io.KeysDown[EG_KEY_RIGHT_SUPER];
-    return false;
+    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
 bool EditorMaster::handle_key_typed(KeyTypedEvent &e) {
     m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.AddInputCharacter(e.get_key());
-    return false;
+    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
 void EditorMaster::add_window(const Reference<EditorWindow> &window) {
@@ -296,6 +327,8 @@ void EditorMaster::update_mouse_cursor() {
     }
     Application::instance().window().set_cursor_shape(cursorType);
 }
+
+
 
 
 EG_RAYTRACER_END

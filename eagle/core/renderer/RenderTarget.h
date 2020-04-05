@@ -11,7 +11,7 @@
 EG_BEGIN
 
 
-enum class RENDER_TARGET_ATTACHMENT {
+enum class RenderTargetAttachment {
     COLOR
 };
 

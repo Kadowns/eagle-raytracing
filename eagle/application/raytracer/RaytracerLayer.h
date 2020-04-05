@@ -26,12 +26,6 @@ public:
     virtual void handle_event(Event &e) override;
 private:
     RaytracerMaster m_raytracerMaster;
-
-    RenderMaster::Event::Listener render_init_callback;
-    RenderMaster::Event::Listener render_deinit_callback;
-
-
-
 };
 
 EG_RAYTRACER_END

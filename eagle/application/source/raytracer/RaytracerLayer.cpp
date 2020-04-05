@@ -9,13 +9,7 @@ EG_RAYTRACER_BEGIN
 
 RaytracerLayer::RaytracerLayer() {
 
-    render_init_callback = [&](){
-        m_raytracerMaster.init();
-    };
 
-    render_deinit_callback = [&](){
-        m_raytracerMaster.deinit();
-    };
 }
 
 RaytracerLayer::~RaytracerLayer() {
@@ -24,13 +18,11 @@ RaytracerLayer::~RaytracerLayer() {
 }
 
 void RaytracerLayer::handle_attach() {
-    RenderMaster::handle_render_init += &render_init_callback;
-    RenderMaster::handle_render_deinit += &render_deinit_callback;
+    m_raytracerMaster.init();
 }
 
 void RaytracerLayer::handle_deattach() {
-    RenderMaster::handle_render_init -= &render_init_callback;
-    RenderMaster::handle_render_deinit -= &render_deinit_callback;
+    m_raytracerMaster.deinit();
 }
 
 void RaytracerLayer::handle_update() {

@@ -6,8 +6,8 @@
 #define EAGLE_EDITORMASTER_H
 
 #include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
-
 #include <eagle/application/editor/EditorWindow.h>
+#include <eagle/application/renderer/RenderMaster.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -18,13 +18,15 @@ public:
         glm::vec2 translate;
     } pushConstBlock;
 public:
-    void init(RenderingContext &context);
+    EditorMaster();
+    ~EditorMaster();
+
+    void init();
     void deinit();
     void update();
-    void render(Reference <Eagle::CommandBuffer> &commandBuffer);
 
-    void add_window(const Reference<EditorWindow>& window);
-    void remove_window(const Reference<EditorWindow>& window);
+    static void add_window(const Reference<EditorWindow>& window);
+    static void remove_window(const Reference<EditorWindow>& window);
 
     bool handle_window_resized(WindowResizedEvent &e);
     bool handle_mouse_moved(MouseMoveEvent& e);
@@ -34,21 +36,28 @@ public:
     bool handle_key_typed(KeyTypedEvent& e);
 
 private:
+    void init_imgui();
+    void handle_context_init(RenderingContext &context);
+    void handle_command_buffer_main_render_pass(Reference<CommandBuffer> &commandBuffer);
     void update_mouse_cursor();
     void update_buffers();
 
 private:
-    Handle<Texture2D> m_font;
+    RenderMaster::CommandBufferEvent::Listener handle_command_buffer_main_render_pass_callback;
+    RenderMaster::Event::Listener handle_context_init_callback;
+
+    Handle<Texture> m_font;
     Handle<Shader> m_shader;
     Handle<DescriptorSetLayout> m_descriptorLayout;
     Handle<DescriptorSet> m_descriptor;
     Handle<IndexBuffer> m_indexBuffer;
     Handle<VertexBuffer> m_vertexBuffer;
 
-    std::vector<Reference<EditorWindow>> m_windows;
+    static std::vector<Reference<EditorWindow>> m_windows;
+    static bool m_updateWindows;
     Reference<EditorWindow> m_activeWindow;
 
-    bool m_updateWindows;
+
 };
 
 EG_RAYTRACER_END

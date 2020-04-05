@@ -10,7 +10,7 @@
 
 EG_BEGIN
 
-class EventDispatcher;
+class LayerEventDispatcher;
 
 class Event {
 public:
@@ -23,15 +23,15 @@ public:
 
     bool is_handled() { return m_handled; }
 private:
-    friend class EventDispatcher;
+    friend class LayerEventDispatcher;
     bool m_handled = false;
 };
 
 
-class EventDispatcher {
+class LayerEventDispatcher {
     using EventFunctionHandle = std::function<bool(Eagle::Event&)>;
 public:
-    EventDispatcher() = default;
+    LayerEventDispatcher() = default;
 
     template<typename T>
     void add_listener(EventFunctionHandle func){
