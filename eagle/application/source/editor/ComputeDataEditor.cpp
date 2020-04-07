@@ -16,9 +16,7 @@ void ComputeDataEditor::handle_window_update() {
 
     glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(m_data.light.rotation()));
     if (ImGui::DragFloat3("Light rotation", &eulerRotation[0])){
-        m_data.light.set_rotation(
-                glm::angleAxis(glm::radians(eulerRotation.x), glm::vec3(1.0f, 0.0f, 0.0f))
-                );
+        m_data.light.set_rotation(glm::quat(glm::radians(eulerRotation)));
     }
 
     bool recreateSpheres = false;
@@ -33,7 +31,10 @@ void ComputeDataEditor::handle_window_update() {
         recreateSpheres = true;
     }
 
-    if (ImGui::DragFloat2("Spheres sizes", &m_data.sphereSizes[0])){
+    if (ImGui::InputFloat2("Spheres sizes", &m_data.sphereSizes[0])){
+        if (m_data.sphereSizes.x <= 0){
+            m_data.sphereSizes.x = 0.1f;
+        }
         if (m_data.sphereSizes.y < m_data.sphereSizes.x){
             m_data.sphereSizes.y = m_data.sphereSizes.x;
         }

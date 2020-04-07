@@ -226,7 +226,7 @@ bool EditorMaster::handle_mouse_moved(MouseMoveEvent &e) {
     m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(e.get_x(), e.get_y());
-    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
+    return false;
 }
 
 bool EditorMaster::handle_mouse_button(MouseButtonEvent &e) {
