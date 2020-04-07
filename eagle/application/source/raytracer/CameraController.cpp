@@ -1,3 +1,5 @@
+#include <cmath>
+
 //
 // Created by Novak on 29/03/2020.
 //
@@ -14,11 +16,6 @@ void CameraController::init() {
 }
 
 void CameraController::update() {
-
-    static auto lastFrameTime = std::chrono::high_resolution_clock::now();
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastFrameTime).count();
-    lastFrameTime = currentTime;
 
     glm::vec3 direction = glm::vec3(0);
 
@@ -46,7 +43,7 @@ void CameraController::update() {
         direction += m_transform.right();
     }
 
-     m_transform.translate(m_speed * time * direction);
+     m_transform.translate(m_speed * Time::delta_time() * direction);
 
     if (Input::instance().mouse_button_pressed(EG_MOUSE_BUTTON_LEFT)) {
         m_dragging = true;
@@ -69,7 +66,7 @@ void CameraController::update() {
     m_rotArrayX.emplace_back(m_rotationX);
     m_rotArrayY.emplace_back(m_rotationY);
 
-    m_frameCounter = m_frameCounterTime / time;
+    m_frameCounter = m_frameCounterTime / Time::delta_time();
 
     if (m_rotArrayX.size() >= m_frameCounter) {
         m_rotArrayX.erase(m_rotArrayX.begin());
@@ -100,7 +97,7 @@ void CameraController::update() {
 }
 
 float CameraController::clamp_angle(float angle, float min, float max) {
-    angle = fmod(angle, 360.0f);
+    angle = std::fmod(angle, 360.0f);
     if ((angle >= -360.f) && (angle <= 360.f)) {
         if (angle < -360.f) {
             angle += 360.f;

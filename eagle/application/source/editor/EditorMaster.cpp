@@ -157,6 +157,8 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
 }
 
 void EditorMaster::update() {
+    ImGuiIO& io = ImGui::GetIO();
+    io.DeltaTime = Time::delta_time();
     if (m_updateWindows){
         ImGui::NewFrame();
         for (auto& window : m_windows){

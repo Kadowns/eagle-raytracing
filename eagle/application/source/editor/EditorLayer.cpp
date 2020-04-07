@@ -4,11 +4,12 @@
 
 #include <eagle/application/editor/EditorLayer.h>
 #include <eagle/application/renderer/RenderLayer.h>
+#include <eagle/application/editor/EditorDockingWindow.h>
 
 EG_RAYTRACER_BEGIN
 
 EditorLayer::EditorLayer() {
-
+    EditorMaster::add_window(std::make_shared<EditorDockingWindow>());
 }
 
 EditorLayer::~EditorLayer() {
@@ -37,6 +38,7 @@ void EditorLayer::handle_attach() {
     });
 
     m_editorMaster.init();
+
 }
 
 void EditorLayer::handle_deattach() {

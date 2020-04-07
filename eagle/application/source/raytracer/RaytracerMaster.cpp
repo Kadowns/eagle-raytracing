@@ -6,6 +6,7 @@
 #include <eagle/application/editor/ComputeDataEditor.h>
 #include <eagle/application/renderer/TextureLoader.h>
 #include <eagle/application/editor/EditorMaster.h>
+#include <eagle/application/editor/SceneWindow.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -48,6 +49,8 @@ void RaytracerMaster::init() {
         m_spheresBuffer.lock()->push();
         m_computeUbo.sampleCount = 0;
     }));
+
+    EditorMaster::add_window(std::make_shared<SceneWindow>());
 
 
     Random::init();
@@ -124,6 +127,7 @@ void RaytracerMaster::init_render_target() {
     }
 
     m_computeTarget = RenderMaster::context().create_texture(textureCreateInfo);
+
     m_computeShader.lock()->update_descriptor_items({m_computeTarget.lock()->get_image().lock(), m_cameraBuffer.lock(), m_spheresBuffer.lock(), m_skybox.lock()->get_image().lock()});
 
     if (m_quadDescriptorSet.lock()){
@@ -133,6 +137,8 @@ void RaytracerMaster::init_render_target() {
         m_quadDescriptorSet = RenderMaster::context().create_descriptor_set(m_quadShader.lock()->get_descriptor_set_layout(0).lock(), {m_computeTarget.lock()->get_image().lock()});
     }
     m_computeUbo.sampleCount = 0;
+
+    EventMaster::instance().emit(OnRaytracerTargetCreated(m_computeTarget.lock()->get_image().lock()));
 }
 
 void RaytracerMaster::handle_frame_begin() {

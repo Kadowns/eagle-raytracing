@@ -14,11 +14,11 @@ ComputeDataEditor::ComputeDataEditor(ComputeData &data, const std::function<void
 
 void ComputeDataEditor::handle_window_update() {
 
+    ImGui::Text("FPS: %f", 1.0f / Time::delta_time());
+
     glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(m_data.light.rotation()));
     if (ImGui::DragFloat3("Light rotation", &eulerRotation[0])){
-        m_data.light.set_rotation(
-                glm::angleAxis(glm::radians(eulerRotation.x), glm::vec3(1.0f, 0.0f, 0.0f))
-                );
+        m_data.light.set_rotation(glm::quat(glm::radians(eulerRotation)));
     }
 
     bool recreateSpheres = false;

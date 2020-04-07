@@ -39,7 +39,7 @@ set(CORE_INCLUDE
         eagle/core/events/InputEvents.h
         eagle/core/events/KeyCodes.h
         eagle/core/InputLayer.h
-        eagle/core/events/ImmediateEvent.h eagle/core/Random.h)
+        eagle/core/events/ImmediateEvent.h eagle/core/Random.h eagle/core/Time.h)
 
 set(CORE_SOURCE
         eagle/core/source/CoreGlobalDefinitions.cpp
@@ -50,7 +50,7 @@ set(CORE_SOURCE
         eagle/core/source/LayerStack.cpp
         eagle/core/source/Input.cpp
         eagle/core/source/InputLayer.cpp
-        eagle/core/source/Random.cpp)
+        eagle/core/source/Random.cpp eagle/core/source/Time.cpp)
 
 
 set(CORE_ALL ${CORE_INCLUDE} ${CORE_SOURCE})
@@ -171,7 +171,7 @@ set(RAYTRACER_INCLUDE
         eagle/application/raytracer/CameraController.h
         eagle/application/raytracer/Transform.h
         eagle/application/raytracer/ComputeData.h
-        )
+        eagle/application/editor/EditorDockingWindow.h eagle/application/editor/SceneWindow.h)
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
@@ -184,7 +184,7 @@ set(RAYTRACER_SOURCE
         eagle/application/source/raytracer/RaytracerLayer.cpp
         eagle/application/source/raytracer/RaytracerMaster.cpp
         eagle/application/source/raytracer/CameraController.cpp
-        )
+        eagle/application/source/editor/EditorDockingWindow.cpp eagle/application/source/editor/SceneWindow.cpp)
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 
