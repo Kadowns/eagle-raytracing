@@ -48,6 +48,7 @@ void VulkanCommandBuffer::begin() {
 void VulkanCommandBuffer::finish() {
     VK_CALL vkEndCommandBuffer(m_commandBuffer);
     m_finished = true;
+    m_boundShader.reset();
 }
 
 void VulkanCommandBuffer::submit() {
@@ -79,8 +80,8 @@ void VulkanCommandBuffer::end_render_pass() {
 }
 
 void VulkanCommandBuffer::bind_shader(const Reference<Shader> &shader) {
-    Reference<VulkanShader> vs = std::static_pointer_cast<VulkanShader>(shader);
-    VK_CALL vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vs->get_pipeline());
+    m_boundShader = std::static_pointer_cast<VulkanShader>(shader);
+    VK_CALL vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_boundShader->get_pipeline());
 }
 
 void VulkanCommandBuffer::bind_compute_shader(const Reference<ComputeShader> &shader) {
@@ -99,12 +100,10 @@ void VulkanCommandBuffer::bind_index_buffer(const Reference<IndexBuffer> &indexB
     VK_CALL vkCmdBindIndexBuffer(m_commandBuffer, vib->get_buffer(m_imageIndexRef).get_native_buffer(), 0, vib->get_native_index_type());
 }
 
-void VulkanCommandBuffer::bind_descriptor_sets(const Reference<Shader> &shader, const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) {
-
-    Reference<VulkanShader> vs = std::static_pointer_cast<VulkanShader>(shader);
+void VulkanCommandBuffer::bind_descriptor_sets(const Reference <DescriptorSet> &descriptorSet, uint32_t setIndex) {
     Reference<VulkanDescriptorSet> vds = std::static_pointer_cast<VulkanDescriptorSet>(descriptorSet);
 
-    VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vs->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndexRef], 0, nullptr);
+    VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_boundShader->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndexRef], 0, nullptr);
 }
 
 void VulkanCommandBuffer::bind_descriptor_sets(const Reference<ComputeShader> &shader, const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) {
@@ -114,9 +113,8 @@ void VulkanCommandBuffer::bind_descriptor_sets(const Reference<ComputeShader> &s
     VK_CALL vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vcs->get_layout(), setIndex, 1, &vds->get_descriptors()[m_imageIndexRef], 0, nullptr);
 }
 
-void VulkanCommandBuffer::push_constants(const Reference<Shader> &shader, ShaderStage stage, uint32_t offset, size_t size, void *data) {
-    Reference<VulkanShader> vs = std::static_pointer_cast<VulkanShader>(shader);
-    VK_CALL vkCmdPushConstants(m_commandBuffer, vs->get_layout(), VulkanConversor::to_vk(stage), offset, size, data);
+void VulkanCommandBuffer::push_constants(ShaderStage stage, uint32_t offset, size_t size, void *data) {
+    VK_CALL vkCmdPushConstants(m_commandBuffer, m_boundShader->get_layout(), VulkanConversor::to_vk(stage), offset, size, data);
 }
 
 void VulkanCommandBuffer::draw(uint32_t vertexCount) {

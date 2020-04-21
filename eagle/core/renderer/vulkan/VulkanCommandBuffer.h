@@ -6,6 +6,7 @@
 #define EAGLE_VULKANCOMMANDBUFFER_H
 
 #include "VulkanCore.h"
+#include "VulkanShader.h"
 
 #include <eagle/core/renderer/CommandBuffer.h>
 
@@ -27,8 +28,8 @@ public:
     virtual void bind_shader(const Reference<Shader> &shader) override;
     virtual void bind_vertex_buffer(const Reference<VertexBuffer> &vertexBuffer) override;
     virtual void bind_index_buffer(const Reference<IndexBuffer> &indexBuffer) override;
-    virtual void push_constants(const Reference<Shader> &shader, ShaderStage stage, uint32_t offset, size_t size, void *data) override;
-    virtual void bind_descriptor_sets(const Reference<Shader> &shader, const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) override;
+    virtual void push_constants(ShaderStage stage, uint32_t offset, size_t size, void *data) override;
+    virtual void bind_descriptor_sets(const Reference <DescriptorSet> &descriptorSet, uint32_t setIndex) override;
     virtual void draw(uint32_t vertexCount) override;
     virtual void draw_indexed(uint32_t indicesCount, uint32_t indexOffset, uint32_t vertexOffset) override;
     virtual void set_viewport(float w, float h, float x, float y, float minDepth, float maxDepth) override;
@@ -50,6 +51,7 @@ private:
     std::function<void(VkCommandBuffer&)> submit_command_buffer_callback;
     VkCommandBuffer m_commandBuffer;
     bool m_finished = false;
+    Reference<VulkanShader> m_boundShader;
 };
 
 EG_END

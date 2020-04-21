@@ -61,7 +61,7 @@ void VulkanUniformBuffer::cleanup() {
     m_cleared = true;
 }
 
-void VulkanUniformBuffer::update() {
+void VulkanUniformBuffer::push() {
     if (!m_dirtyBytes){
         return;
     }
@@ -78,7 +78,7 @@ bool VulkanUniformBuffer::is_dirty() const {
     return !m_dirtyBuffers.empty();
 }
 
-void VulkanUniformBuffer::set_bytes(void* data, size_t size, size_t offset) {
+void VulkanUniformBuffer::set_data(void *data, size_t size, size_t offset) {
     assert(size + offset <= m_bytes.size());
     memcpy(m_bytes.data() + offset, data, size);
     m_dirtyBytes = true;

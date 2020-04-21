@@ -125,7 +125,7 @@ set(RENDERER_SOURCE
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})
 
-set(EAGLE_ALL ${CORE_ALL} ${RENDERER_ALL})
+set(EAGLE_ALL ${CORE_ALL} ${RENDERER_ALL} eagle/application/components/RaytracerData.h)
 
 add_library(eagle_core STATIC "${EAGLE_ALL}")
 
@@ -153,6 +153,7 @@ target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent 
 add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
 add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
 add_subdirectory(${EG_EXTERNAL_PATH}/stb ${CMAKE_BINARY_DIR}/stb)
+add_subdirectory(${EG_EXTERNAL_PATH}/entityx ${CMAKE_BINARY_DIR}/entityx)
 
 set(RAYTRACER_INCLUDE
         eagle/application/EventMaster.h
@@ -165,13 +166,19 @@ set(RAYTRACER_INCLUDE
         eagle/application/editor/EditorLayer.h
         eagle/application/editor/EditorWindow.h
         eagle/application/editor/ComputeDataEditor.h
-        eagle/application/raytracer/RaytracerLayer.h
-        eagle/application/raytracer/RaytracerMaster.h
-        eagle/application/raytracer/Camera.h
-        eagle/application/raytracer/CameraController.h
-        eagle/application/raytracer/Transform.h
-        eagle/application/raytracer/ComputeData.h
-        eagle/application/editor/EditorDockingWindow.h eagle/application/editor/SceneWindow.h)
+        eagle/application/components/Camera.h
+        eagle/application/components/CameraController.h
+        eagle/application/components/Transform.h
+        eagle/application/components/SceneData.h
+        eagle/application/editor/EditorDockingWindow.h
+        eagle/application/editor/SceneWindow.h
+        eagle/application/components/DirectionalLight.h
+        eagle/application/systems/RaytracerSystem.h
+        eagle/application/systems/CameraSystem.h
+        eagle/application/systems/LightSystem.h
+        eagle/application/components/SingletonComponent.h
+        eagle/application/components/Sphere.h
+        eagle/application/Scene.h)
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
@@ -181,10 +188,12 @@ set(RAYTRACER_SOURCE
         eagle/application/source/editor/EditorMaster.cpp
         eagle/application/source/editor/EditorWindow.cpp
         eagle/application/source/editor/ComputeDataEditor.cpp
-        eagle/application/source/raytracer/RaytracerLayer.cpp
-        eagle/application/source/raytracer/RaytracerMaster.cpp
-        eagle/application/source/raytracer/CameraController.cpp
-        eagle/application/source/editor/EditorDockingWindow.cpp eagle/application/source/editor/SceneWindow.cpp)
+        eagle/application/source/editor/EditorDockingWindow.cpp
+        eagle/application/source/editor/SceneWindow.cpp
+        eagle/application/source/systems/RaytracerSystem.cpp
+        eagle/application/source/systems/CameraSystem.cpp
+        eagle/application/source/systems/LightSystem.cpp
+        )
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 
@@ -205,7 +214,7 @@ set_target_properties(
 
 define_file_basename_for_sources(eagle_raytracer)
 
-target_link_libraries(eagle_raytracer eagle_core imgui glm stb)
+target_link_libraries(eagle_raytracer eagle_core imgui glm stb entityx)
 #-----------------------------------------------------
 
 add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h)

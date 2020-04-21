@@ -77,6 +77,11 @@ private:
 
 };
 
+struct OnCameraUpdate {
+    OnCameraUpdate(const Camera& camera) : camera(camera) {}
+    const Camera& camera;
+};
+
 EG_RAYTRACER_END
 
 #endif //EAGLE_CAMERA_H

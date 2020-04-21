@@ -6,8 +6,8 @@
 #define EAGLE_SCENEWINDOW_H
 
 #include <eagle/application/editor/EditorWindow.h>
-#include <eagle/application/raytracer/RaytracerMaster.h>
 #include <eagle/application/EventMaster.h>
+#include <eagle/application/renderer/RenderMaster.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -21,6 +21,7 @@ private:
     void handle_raytracer_target_created(const Reference<Image>& target);
 
 private:
+    entityx::EntityX m_scene;
     std::function<void(const OnRaytracerTargetCreated&)> raytracer_target_created_callback;
     Handle<DescriptorSet> m_descriptorSet;
 };

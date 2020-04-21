@@ -39,6 +39,7 @@ private:
     void init_imgui();
     void handle_context_init(RenderingContext &context);
     void handle_command_buffer_main_render_pass(Reference<CommandBuffer> &commandBuffer);
+    void init_render_state(const Reference <Eagle::Shader> &shader, Reference <CommandBuffer> &commandBuffer);
     void update_mouse_cursor();
     void update_buffers();
 
@@ -47,17 +48,13 @@ private:
     RenderMaster::Event::Listener handle_context_init_callback;
 
     Handle<Texture> m_font;
-    Handle<Shader> m_shader;
+    Handle<Shader> m_blendEnabledShader, m_blendDisabledShader;
     Handle<DescriptorSetLayout> m_descriptorLayout;
     Handle<DescriptorSet> m_descriptor;
     Handle<IndexBuffer> m_indexBuffer;
     Handle<VertexBuffer> m_vertexBuffer;
 
     static std::vector<Reference<EditorWindow>> m_windows;
-    static bool m_updateWindows;
-    Reference<EditorWindow> m_activeWindow;
-
-
 };
 
 EG_RAYTRACER_END

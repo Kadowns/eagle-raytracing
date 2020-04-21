@@ -6,19 +6,19 @@
 #define EAGLE_COMPUTEDATAEDITOR_H
 
 #include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
-#include <eagle/application/raytracer/ComputeData.h>
+#include <eagle/application/components/SceneData.h>
 #include <eagle/application/editor/EditorWindow.h>
 
 EG_RAYTRACER_BEGIN
 
 class ComputeDataEditor : public EditorWindow {
 public:
-    ComputeDataEditor(ComputeData &data, const std::function<void()> &recreateSpheresCallback);
+    ComputeDataEditor(SceneData &data, const std::function<void()> &recreateSpheresCallback);
 
     virtual void handle_window_update() override;
 
 private:
-    ComputeData& m_data;
+    SceneData& m_data;
     std::function<void()> recreate_spheres;
 };
 

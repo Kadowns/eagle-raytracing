@@ -8,7 +8,6 @@
 EG_RAYTRACER_BEGIN
 
 std::vector<Reference<EditorWindow>> EditorMaster::m_windows;
-bool EditorMaster::m_updateWindows;
 
 EditorMaster::EditorMaster() {
     handle_context_init_callback = [&](){
@@ -137,13 +136,17 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
     pipelineInfo.vertexLayout = vertexLayout;
     pipelineInfo.blendEnable = true;
     pipelineInfo.dynamicStates = true;
-    pipelineInfo.depthTesting = false;
-    pipelineInfo.offscreenRendering = false;
 
-    m_shader = context.create_shader({
-                                       {ShaderStage::VERTEX, ProjectRoot + "/shaders/text.vert"},
-                                       {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/text.frag"},
-                                     }, pipelineInfo);
+    m_blendEnabledShader = context.create_shader({
+        {ShaderStage::VERTEX, ProjectRoot + "/shaders/text.vert"},
+        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/text.frag"},
+    }, pipelineInfo);
+
+    pipelineInfo.blendEnable = false;
+    m_blendDisabledShader = context.create_shader({
+        {ShaderStage::VERTEX, ProjectRoot + "/shaders/text.vert"},
+        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/text.frag"},
+    }, pipelineInfo);
 
     m_descriptor = context.create_descriptor_set(m_descriptorLayout.lock(), {m_font.lock()->get_image().lock()});
 
@@ -157,19 +160,26 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
 }
 
 void EditorMaster::update() {
-    ImGuiIO& io = ImGui::GetIO();
-    io.DeltaTime = Time::delta_time();
-    if (m_updateWindows){
-        ImGui::NewFrame();
-        for (auto& window : m_windows){
-            window->handle_update();
-        }
-        ImGui::EndFrame();
-        ImGui::Render();
-        update_mouse_cursor();
-        update_buffers();
-        m_updateWindows = false;
+    ImGuiIO &io = ImGui::GetIO();
+    io.DeltaTime = Time::delta_time() + 0.0001f;
+
+    ImGui::NewFrame();
+    for (auto &window : m_windows) {
+        window->handle_update();
     }
+    ImGui::EndFrame();
+    ImGui::Render();
+    update_mouse_cursor();
+    update_buffers();
+}
+
+void EditorMaster::init_render_state(const Reference<Shader> &shader, Reference<CommandBuffer> &commandBuffer) {
+    ImGuiIO &io = ImGui::GetIO();
+    commandBuffer->set_viewport(io.DisplaySize.x, io.DisplaySize.y, 0, 0, 0, 1);
+    commandBuffer->bind_shader(shader);
+    pushConstBlock.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+    pushConstBlock.translate = glm::vec2(-1.0f);
+    commandBuffer->push_constants(ShaderStage::VERTEX, 0, sizeof(pushConstBlock), &pushConstBlock);
 }
 
 void EditorMaster::handle_command_buffer_main_render_pass(Reference<CommandBuffer> &commandBuffer) {
@@ -178,15 +188,9 @@ void EditorMaster::handle_command_buffer_main_render_pass(Reference<CommandBuffe
     ImDrawData *imDrawData = ImGui::GetDrawData();
     // Render commands
     if (imDrawData->CmdListsCount > 0) {
-        commandBuffer->bind_shader(m_shader.lock());
 
-        commandBuffer->set_viewport(io.DisplaySize.x, io.DisplaySize.y, 0, 0, 0, 1);
+        init_render_state(m_blendEnabledShader.lock(), commandBuffer);
 
-        pushConstBlock.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-        pushConstBlock.translate = glm::vec2(-1.0f);
-
-        commandBuffer->push_constants(m_shader.lock(), ShaderStage::VERTEX, 0,
-                                      sizeof(pushConstBlock), &pushConstBlock);
 
         int32_t vertexOffset = 0;
         int32_t indexOffset = 0;
@@ -196,21 +200,34 @@ void EditorMaster::handle_command_buffer_main_render_pass(Reference<CommandBuffe
 
         for (int32_t i = 0; i < imDrawData->CmdListsCount; i++) {
 
-            const ImDrawList *cmdList = imDrawData->CmdLists[i];
+            ImDrawList *cmdList = imDrawData->CmdLists[i];
             for (int32_t j = 0; j < cmdList->CmdBuffer.Size; j++) {
 
-                const ImDrawCmd *cmd = &cmdList->CmdBuffer[j];
-                uint32_t x = std::max((int32_t) (cmd->ClipRect.x), 0);
-                uint32_t y = std::max((int32_t) (cmd->ClipRect.y), 0);
-                uint32_t w = (uint32_t) (cmd->ClipRect.z - cmd->ClipRect.x);
-                uint32_t h = (uint32_t) (cmd->ClipRect.w - cmd->ClipRect.y);
-                commandBuffer->set_scissor(w, h, x, y);
+                ImDrawCmd *cmd = &cmdList->CmdBuffer[j];
+                if (cmd->UserCallback != NULL) {
+                    if (cmd->UserCallback == EnableBlending){
+                        init_render_state(m_blendEnabledShader.lock(), commandBuffer);
+                    }
+                    else if (cmd->UserCallback == DisableBlending){
+                        init_render_state(m_blendDisabledShader.lock(), commandBuffer);
+                    }
+                    else{
+                        cmd->UserCallback(cmdList, cmd);
+                    }
+                }
+                else {
+                    uint32_t x = std::max((int32_t) (cmd->ClipRect.x), 0);
+                    uint32_t y = std::max((int32_t) (cmd->ClipRect.y), 0);
+                    uint32_t w = (uint32_t) (cmd->ClipRect.z - cmd->ClipRect.x);
+                    uint32_t h = (uint32_t) (cmd->ClipRect.w - cmd->ClipRect.y);
+                    commandBuffer->set_scissor(w, h, x, y);
 
-                commandBuffer->bind_descriptor_sets(m_shader.lock(), static_cast<Handle<DescriptorSet>*>(cmd->TextureId)->lock(), 0);
+                    commandBuffer->bind_descriptor_sets(static_cast<Handle<DescriptorSet> *>(cmd->TextureId)->lock(), 0);
 
-                commandBuffer->draw_indexed(cmd->ElemCount, indexOffset, vertexOffset);
+                    commandBuffer->draw_indexed(cmd->ElemCount, indexOffset, vertexOffset);
 
-                indexOffset += cmd->ElemCount;
+                    indexOffset += cmd->ElemCount;
+                }
             }
             vertexOffset += cmdList->VtxBuffer.Size;
         }
@@ -218,28 +235,24 @@ void EditorMaster::handle_command_buffer_main_render_pass(Reference<CommandBuffe
 }
 
 bool EditorMaster::handle_window_resized(WindowResizedEvent &e) {
-    m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.DisplaySize = ImVec2(e.get_width(), e.get_height());
     return false;
 }
 
 bool EditorMaster::handle_mouse_moved(MouseMoveEvent &e) {
-    m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(e.get_x(), e.get_y());
-    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
+    return false;
 }
 
 bool EditorMaster::handle_mouse_button(MouseButtonEvent &e) {
-    m_updateWindows = true;
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[e.get_key()] = e.get_action() == EG_PRESS || e.get_action() == EG_REPEAT;
     return ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 }
 
 bool EditorMaster::handle_mouse_scrolled(MouseScrolledEvent &e) {
-    m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.MouseWheel = e.get_y();
     io.MouseWheelH = e.get_x();
@@ -247,7 +260,6 @@ bool EditorMaster::handle_mouse_scrolled(MouseScrolledEvent &e) {
 }
 
 bool EditorMaster::handle_key(KeyEvent &e) {
-    m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
 
     io.KeysDown[e.get_key()] = e.get_action() == EG_PRESS || e.get_action() == EG_REPEAT;
@@ -261,19 +273,16 @@ bool EditorMaster::handle_key(KeyEvent &e) {
 }
 
 bool EditorMaster::handle_key_typed(KeyTypedEvent &e) {
-    m_updateWindows = true;
     ImGuiIO &io = ImGui::GetIO();
     io.AddInputCharacter(e.get_key());
     return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
 void EditorMaster::add_window(const Reference<EditorWindow> &window) {
-    m_updateWindows = true;
     m_windows.emplace_back(window);
 }
 
 void EditorMaster::remove_window(const Reference<EditorWindow> &window) {
-    m_updateWindows = true;
     m_windows.erase(std::find(m_windows.begin(), m_windows.end(), window));
 }
 

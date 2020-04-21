@@ -9,6 +9,9 @@
 
 EG_RAYTRACER_BEGIN
 
+#define EnableBlending ImDrawCallback_ResetRenderState
+#define DisableBlending (ImDrawCallback)(-2)
+
 class EditorWindow {
 public:
     EditorWindow(const std::string& name);

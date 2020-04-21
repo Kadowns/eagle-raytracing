@@ -22,7 +22,7 @@ struct Transform {
     }
 
     inline void set_rotation(const glm::quat& rotation) {
-        double const eps = 1e-26; // some error threshold
+        double const eps = 1e-29; // some error threshold
         if (glm::abs(glm::dot(m_rotation, rotation)) < 1 - eps){
             hasChanged = true;
         }

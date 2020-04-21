@@ -43,14 +43,13 @@ public:
     bind_index_buffer(const Reference<IndexBuffer> &indexBuffer) = 0;
 
     virtual void
-    push_constants(const Reference<Shader> &shader, ShaderStage stage, uint32_t offset, size_t size, void *data) = 0;
+    push_constants(ShaderStage stage, uint32_t offset, size_t size, void *data) = 0;
 
     virtual void
     draw_indexed(uint32_t indicesCount, uint32_t indexOffset, uint32_t vertexOffset) = 0;
 
     virtual void
-    bind_descriptor_sets(const Reference<Shader> &shader, const Reference<DescriptorSet> &descriptorSet,
-                         uint32_t setIndex) = 0;
+    bind_descriptor_sets(const Reference<DescriptorSet> &descriptorSet, uint32_t setIndex) = 0;
 
     virtual void
     bind_descriptor_sets(const Reference<ComputeShader> &shader, const Reference<DescriptorSet> &descriptorSet,

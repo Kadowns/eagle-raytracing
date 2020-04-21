@@ -71,6 +71,7 @@ fabric.properties
 
 external/*
 !external/glslang/include/
+!external/entityx/
 
 *.a
 *.lib
