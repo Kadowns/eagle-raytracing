@@ -178,7 +178,7 @@ set(RAYTRACER_INCLUDE
         eagle/application/systems/LightSystem.h
         eagle/application/components/SingletonComponent.h
         eagle/application/components/Sphere.h
-        eagle/application/Scene.h)
+        eagle/application/SceneLayer.h)
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
@@ -193,7 +193,7 @@ set(RAYTRACER_SOURCE
         eagle/application/source/systems/RaytracerSystem.cpp
         eagle/application/source/systems/CameraSystem.cpp
         eagle/application/source/systems/LightSystem.cpp
-        )
+        eagle/application/source/SceneLayer.cpp)
 
 set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
 

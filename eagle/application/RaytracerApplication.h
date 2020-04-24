@@ -7,5 +7,6 @@
 
 #include <eagle/application/renderer/RenderLayer.h>
 #include <eagle/application/editor/EditorLayer.h>
+#include <eagle/application/SceneLayer.h>
 
 #endif //EAGLE_RAYTRACERAPPLICATION_H

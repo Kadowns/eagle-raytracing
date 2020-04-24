@@ -15,24 +15,13 @@
 
 EG_RAYTRACER_BEGIN
 
-SceneWindow::SceneWindow() : EditorWindow("Scene") {
+SceneWindow::SceneWindow() : EditorWindow("SceneLayer") {
     raytracer_target_created_callback = [&](const OnRaytracerTargetCreated& ev){
         handle_raytracer_target_created(ev.target);
     };
     EventMaster::instance().subscribe<OnRaytracerTargetCreated>(&raytracer_target_created_callback);
 
-    auto camera = m_scene.entities.create();
-    camera.assign<Camera>();
-    camera.assign<Transform>(glm::vec3(0, 10, -20), glm::quat(glm::vec3(0)), glm::vec3(1));
-    camera.assign<CameraController>();
 
-    auto light = m_scene.entities.create();
-    light.assign<DirectionalLight>();
-    light.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(glm::vec3(-30, 0, 0))), glm::vec3(1))->hasChanged = true;
-
-    m_scene.systems.add<CameraSystem>();
-    m_scene.systems.add<LightSystem>();
-    m_scene.systems.add<RaytracerSystem>();
 
 }
 

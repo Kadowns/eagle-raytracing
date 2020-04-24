@@ -10,7 +10,6 @@
 #include <eagle/application/components/SceneData.h>
 #include <eagle/application/components/RaytracerData.h>
 #include <eagle/application/components/SingletonComponent.h>
-#include <eagle/application/components/Sphere.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -35,11 +34,16 @@ RaytracerSystem::RaytracerSystem() {
         handle_command_buffer_begin(commandBuffer);
     };
 
+    command_buffer_main_render_pass_callback = [&](const Reference<CommandBuffer>& commandBuffer){
+        handle_command_buffer_main_render_pass(commandBuffer);
+    };
+
     RenderMaster::handle_context_init += &context_init_callback;
     RenderMaster::handle_context_deinit += &context_deinit_callback;
     RenderMaster::handle_frame_begin += &frame_begin_callback;
     RenderMaster::handle_context_recreated += &context_recreated_callback;
     RenderMaster::handle_command_buffer_begin += &command_buffer_begin_callback;
+    RenderMaster::handle_command_buffer_main_render_pass += &command_buffer_main_render_pass_callback;
 }
 
 RaytracerSystem::~RaytracerSystem() {
@@ -48,15 +52,23 @@ RaytracerSystem::~RaytracerSystem() {
     RenderMaster::handle_frame_begin -= &frame_begin_callback;
     RenderMaster::handle_context_recreated -= &context_recreated_callback;
     RenderMaster::handle_command_buffer_begin -= &command_buffer_begin_callback;
+    RenderMaster::handle_command_buffer_main_render_pass -= &command_buffer_main_render_pass_callback;
 }
 
 void RaytracerSystem::configure(entityx::EntityManager &entities, entityx::EventManager &events) {
     events.subscribe<OnCameraUpdate>(*this);
     events.subscribe<OnLightUpdate>(*this);
-    generate_scene(entities);
+    events.subscribe<entityx::ComponentAddedEvent<Sphere>>(*this);
+    events.subscribe<entityx::ComponentRemovedEvent<Sphere>>(*this);
+    update_sphere_buffer(entities);
 }
 
 void RaytracerSystem::update(entityx::EntityManager &entities, entityx::EventManager &events, entityx::TimeDelta dt) {
+    if (m_updateSpheres){
+        update_sphere_buffer(entities);
+        m_updateSpheres = false;
+    }
+
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
     data.ubo.pixelOffset = glm::vec2(Random::value(), Random::value());
     auto buffer = data.uniformBuffer.lock();
@@ -94,6 +106,12 @@ void RaytracerSystem::init_render_target() {
         buffer->set_data(&data.ubo, buffer->size(), 0);
         buffer->push();
     }
+    if (!data.quad.descriptorSet.lock()){
+        data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(data.quad.shader.lock()->get_descriptor_set_layout(0).lock(), {data.computeTarget.lock()->get_image().lock()});
+    }
+    else{
+        data.quad.descriptorSet.lock()->update({data.computeTarget.lock()->get_image().lock()});
+    }
 
     data.computeShader.lock()->update_descriptor_items({data.computeTarget.lock()->get_image().lock(), data.uniformBuffer.lock(), data.spheresBuffer.lock(), data.skybox.lock()->get_image().lock()});
 
@@ -109,9 +127,15 @@ void RaytracerSystem::handle_context_init() {
     skyboxCreateInfo.usage = TextureUsage::READ;
     data.skybox = RenderMaster::context().create_texture(skyboxCreateInfo);
 
-
-    data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * MAX_SPHERES, data.spheresData.data(),
+    data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(),
                                                                     BufferUsage::DYNAMIC);
+
+    ShaderPipelineInfo pipelineInfo = {};
+    data.quad.shader = RenderMaster::context().create_shader({
+        {ShaderStage::VERTEX, ProjectRoot + "/shaders/quad.vert"},
+        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/quad.frag"},
+    }, pipelineInfo);
+
 
     init_render_target();
 }
@@ -131,6 +155,13 @@ void RaytracerSystem::handle_command_buffer_begin(const Reference<CommandBuffer>
     commandBuffer->pipeline_barrier(data.computeTarget.lock()->get_image().lock()->get_attachment().lock(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
 }
 
+void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<CommandBuffer> &commandBuffer) {
+    RaytracerData& data = SingletonComponent::get<RaytracerData>();
+    commandBuffer->bind_shader(data.quad.shader.lock());
+    commandBuffer->bind_descriptor_sets(data.quad.descriptorSet.lock(), 0);
+    commandBuffer->draw(3);
+}
+
 void RaytracerSystem::receive(const OnCameraUpdate &ev) {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
     data.ubo.sampleCount = 0;
@@ -145,64 +176,36 @@ void RaytracerSystem::receive(const OnLightUpdate &ev) {
     data.ubo.light = glm::vec4(ev.light.direction, ev.light.intensity);
 }
 
-void RaytracerSystem::generate_scene(entityx::EntityManager &entities) {
-    for (auto e : entities.entities_with_components<Transform, Sphere>()){
-        e.destroy();
-    }
-
-    SceneData& scene = SingletonComponent::get<SceneData>();
+void RaytracerSystem::update_sphere_buffer(entityx::EntityManager &entities) {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    data.spheresData.clear();
-    // Add a number of random spheres
-    for (int i = 0; i < scene.maxSphereCount; i++) {
-        auto e = entities.create();
-        auto sphere = e.assign<Sphere>();
-        auto transform = e.assign<Transform>();
-        // Radius and radius
-        sphere->radius = scene.sphereSizes.x + Random::value() * (scene.sphereSizes.y - scene.sphereSizes.x);
-        glm::vec2 randomPos = random_inside_unit_circle() * scene.spherePlacementRadius;
-        transform->set_position(glm::vec3(randomPos.x, sphere->radius, randomPos.y));
-        // Reject spheres that are intersecting others
-        bool skipSphere = false;
-        for (auto other : entities.entities_with_components<Sphere, Transform>()) {
-            if (e == other) continue;
-
-            auto otherSphere = other.component<Sphere>();
-            auto otherTransform = other.component<Transform>();
-            float minDist = sphere->radius + otherSphere->radius;
-            if (glm::length2(transform->position() - otherTransform->position()) < minDist * minDist){
-                skipSphere = true;
-                break;
-            }
+    entityx::ComponentHandle<Transform> transform;
+    entityx::ComponentHandle<Sphere> sphere;
+    auto it = data.spheresData.begin();
+    for (auto e : entities.entities_with_components<Transform, Sphere>(transform, sphere)){
+        it->radius = sphere->radius;
+        it->albedo = sphere->albedo;
+        it->specular = sphere->specular;
+        it->position = transform->position();
+        it++;
+        if (it == data.spheresData.end()){
+            EG_WARNING("Maximum sphere capacity reached!");
+            break;
         }
-        if (skipSphere){
-            continue;
-        }
-        // Albedo and specular color
-        glm::vec3 color = glm::vec3(Random::value(), Random::value(), Random::value());
-        bool metal = Random::value() < scene.metalPercent;
-        sphere->albedo = metal ? glm::vec3(0.01f) : glm::vec3(color.r, color.g, color.b);
-        sphere->specular = metal ? glm::vec3(color.r, color.g, color.b) : glm::vec3(0.01f);
-
-        //adds sphere to the buffer that will be uploaded to the gpu
-        RaytracerData::SphereData sphereData = {};
-        sphereData.position = transform->position();
-        sphereData.radius = sphere->radius;
-        sphereData.albedo = sphere->albedo;
-        sphereData.specular = sphere->specular;
-        data.spheresData.emplace_back(sphereData);
     }
-    data.ubo.sphereCount = data.spheresData.size();
-
-    if (data.spheresBuffer.lock()){
-        data.spheresBuffer.lock()->set_data(data.spheresData.data(), sizeof(RaytracerData::SphereData) * data.spheresData.size(), 0);
-        data.spheresBuffer.lock()->push();
+    data.ubo.sphereCount = it - data.spheresData.begin();
+    if (auto buffer = data.spheresBuffer.lock()){
+        buffer->set_data(data.spheresData.data(), sizeof(RaytracerData::SphereData) * data.ubo.sphereCount, 0);
+        buffer->push();
         data.ubo.sampleCount = 0;
     }
 }
 
-glm::vec2 RaytracerSystem::random_inside_unit_circle() {
-    return glm::normalize(glm::vec2(Random::range(-1.0f, 1.0f), Random::range(-1.0f, 1.0f))) * Random::value();
+void RaytracerSystem::receive(const entityx::ComponentAddedEvent<Sphere> &ev) {
+    m_updateSpheres = true;
+}
+
+void RaytracerSystem::receive(const entityx::ComponentRemovedEvent<Sphere> &ev) {
+    m_updateSpheres = true;
 }
 
 EG_RAYTRACER_END

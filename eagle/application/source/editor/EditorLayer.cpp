@@ -10,8 +10,8 @@
 EG_RAYTRACER_BEGIN
 
 EditorLayer::EditorLayer() {
-    EditorMaster::add_window(std::make_shared<EditorDockingWindow>());
-    EditorMaster::add_window(std::make_shared<SceneWindow>());
+    //EditorMaster::add_window(std::make_shared<EditorDockingWindow>());
+    //EditorMaster::add_window(std::make_shared<SceneWindow>());
 }
 
 EditorLayer::~EditorLayer() {

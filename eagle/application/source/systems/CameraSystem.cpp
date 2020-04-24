@@ -6,7 +6,9 @@
 #include <eagle/application/components/Transform.h>
 #include <eagle/application/components/Camera.h>
 #include <eagle/application/components/CameraController.h>
-#include <external/imgui/imgui/imgui.h>
+#include <eagle/application/components/Sphere.h>
+#include <eagle/application/components/SceneData.h>
+#include <eagle/application/components/SingletonComponent.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -22,45 +24,57 @@ void CameraSystem::configure(entityx::EntityManager &entities, entityx::EventMan
 }
 
 void CameraSystem::update(entityx::EntityManager &entities, entityx::EventManager &events, entityx::TimeDelta dt) {
-    if (!ImGui::IsWindowFocused()){
-        return;
-    }
     entities.each<Camera, CameraController, Transform>([&](entityx::Entity e, Camera& camera, CameraController& controller, Transform& transform){
 
         glm::vec3 direction = glm::vec3(0);
 
-        if (ImGui::IsKeyDown(EG_KEY_W)) {
+        if (Input::instance().key_down(EG_KEY_W)) {
             direction += transform.front();
         }
 
-        if (ImGui::IsKeyDown(EG_KEY_S)) {
+        if (Input::instance().key_down(EG_KEY_S)) {
             direction -= transform.front();
         }
 
-        if (ImGui::IsKeyDown(EG_KEY_Q)) {
+        if (Input::instance().key_down(EG_KEY_Q)) {
             direction += glm::vec3(0.0f, 1.0f, 0.0f);
         }
 
-        if (ImGui::IsKeyDown(EG_KEY_E)) {
+        if (Input::instance().key_down(EG_KEY_E)) {
             direction += glm::vec3(0.0f, -1.0f, 0.0f);
         }
 
-        if (ImGui::IsKeyDown(EG_KEY_A)) {
+        if (Input::instance().key_down(EG_KEY_A)) {
             direction -= transform.right();
         }
 
-        if (ImGui::IsKeyDown(EG_KEY_D)) {
+        if (Input::instance().key_down(EG_KEY_D)) {
             direction += transform.right();
+        }
+
+        if (Input::instance().key_pressed(EG_KEY_G)){
+            SceneData& scene = SingletonComponent::get<SceneData>();
+
+            auto s = entities.create();
+            auto tr = s.assign<Transform>(transform);
+            auto sphere = s.assign<Sphere>();
+
+            sphere->radius = Random::range(0.3, 8.0f);
+            glm::vec3 color = glm::vec3(Random::value(), Random::value(), Random::value());
+            bool metal = Random::value() < scene.metalPercent;
+            sphere->albedo = metal ? glm::vec3(0.01f) : glm::vec3(color.r, color.g, color.b);
+            sphere->specular = metal ? glm::vec3(color.r, color.g, color.b) : glm::vec3(0.01f);
+            tr->translate(transform.front() * sphere->radius * 2.0f);
         }
 
         transform.translate(controller.speed * Time::delta_time() * direction);
 
 
-        if (ImGui::IsMouseDown(EG_MOUSE_BUTTON_LEFT)) {
+        if (Input::instance().mouse_button_pressed(EG_MOUSE_BUTTON_LEFT)) {
             controller.dragging = true;
             Application::instance().window().set_cursor_visible(false);
         }
-        else if(ImGui::IsMouseReleased(EG_MOUSE_BUTTON_LEFT)) {
+        else if(Input::instance().mouse_button_released(EG_MOUSE_BUTTON_LEFT)) {
             controller.dragging = false;
             Application::instance().window().set_cursor_visible(true);
         }
@@ -69,10 +83,9 @@ void CameraSystem::update(entityx::EntityManager &entities, entityx::EventManage
         controller.rotAverageY = 0.0f;
 
         if (controller.dragging) {
-            auto delta = ImGui::GetMouseDragDelta(EG_MOUSE_BUTTON_LEFT);
-            ImGui::ResetMouseDragDelta(EG_MOUSE_BUTTON_LEFT);
-            controller.rotationX -= delta.x * controller.sensitivity;
-            controller.rotationY += delta.y * controller.sensitivity;
+            auto delta = Input::instance().mouse_move_delta();
+            controller.rotationX -= delta.first * controller.sensitivity;
+            controller.rotationY += delta.second * controller.sensitivity;
         }
 
         controller.rotArrayX.emplace_back(controller.rotationX);

@@ -27,12 +27,18 @@ struct RaytracerData {
         alignas(16) glm::vec3 specular;
     };
 
-    std::vector<SphereData> spheresData;
+    std::array<SphereData, MAX_SPHERES> spheresData;
     Handle<UniformBuffer> uniformBuffer;
     Handle<ComputeShader> computeShader;
     Handle<StorageBuffer> spheresBuffer;
     Handle<Texture> computeTarget;
     Handle<Texture> skybox;
+    struct{
+        Handle<Shader> shader;
+        Handle<DescriptorSet> descriptorSet;
+    } quad;
+
+
 };
 
 EG_RAYTRACER_END

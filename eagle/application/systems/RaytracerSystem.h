@@ -10,6 +10,7 @@
 #include <eagle/application/components/Camera.h>
 #include <eagle/application/components/DirectionalLight.h>
 #include <eagle/application/components/SceneData.h>
+#include <eagle/application/components/Sphere.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -22,20 +23,26 @@ public:
     virtual void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const OnCameraUpdate& ev);
     void receive(const OnLightUpdate& ev);
+    void receive(const entityx::ComponentAddedEvent<Sphere>& ev);
+    void receive(const entityx::ComponentRemovedEvent<Sphere>& ev);
 private:
     void init_render_target();
     void handle_context_init();
     void handle_context_deinit();
     void handle_frame_begin();
     void handle_command_buffer_begin(const Reference<CommandBuffer>& commandBuffer);
-    void generate_scene(entityx::EntityManager &entities);
-    glm::vec2 random_inside_unit_circle();
+    void handle_command_buffer_main_render_pass(const Reference<CommandBuffer>& commandBuffer);
+
+    void update_sphere_buffer(entityx::EntityManager &entities);
+
 private:
     RenderMaster::Event::Listener context_init_callback;
     RenderMaster::Event::Listener context_deinit_callback;
     RenderMaster::Event::Listener frame_begin_callback;
     RenderMaster::Event::Listener context_recreated_callback;
     RenderMaster::CommandBufferEvent::Listener command_buffer_begin_callback;
+    RenderMaster::CommandBufferEvent::Listener command_buffer_main_render_pass_callback;
+    bool m_updateSpheres;
 };
 
 

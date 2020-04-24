@@ -21,9 +21,10 @@ private:
     void handle_raytracer_target_created(const Reference<Image>& target);
 
 private:
-    entityx::EntityX m_scene;
+
     std::function<void(const OnRaytracerTargetCreated&)> raytracer_target_created_callback;
     Handle<DescriptorSet> m_descriptorSet;
+    entityx::EntityX m_scene;
 };
 
 EG_RAYTRACER_END
