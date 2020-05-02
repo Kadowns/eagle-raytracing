@@ -11,6 +11,7 @@ EG_RAYTRACER_BEGIN
 
 class SceneLayer : public Layer {
 public:
+    SceneLayer();
     virtual void handle_attach() override;
 
     virtual void handle_deattach() override;
@@ -22,7 +23,9 @@ private:
     void generate_scene();
     glm::vec2 random_inside_unit_circle();
 private:
-    entityx::EntityX m_scene;
+    entityx::EventManager m_events;
+    entityx::EntityManager m_entities;
+    entityx::SystemManager m_systems;
 };
 
 EG_RAYTRACER_END

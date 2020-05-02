@@ -10,11 +10,7 @@
 EG_RAYTRACER_BEGIN
 
 #define MAX_SPHERES 256
-
-struct OnSceneUpdate {
-    OnSceneUpdate(entityx::EntityManager& entities) : entities(entities) {}
-    entityx::EntityManager& entities;
-};
+#define MAX_BOXES 32
 
 struct SceneData {
     int maxSphereCount = 100;

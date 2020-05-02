@@ -18,6 +18,7 @@ struct RaytracerData {
         alignas(16) glm::vec4 light;
         float sampleCount;
         int sphereCount;
+        int boxCount;
     } ubo;
 
     struct SphereData {
@@ -27,10 +28,20 @@ struct RaytracerData {
         alignas(16) glm::vec3 specular;
     };
 
+    struct BoxData {
+        alignas(16) glm::vec3 center;
+        alignas(16) glm::vec3 radius;
+        alignas(16) glm::vec3 albedo;
+        alignas(16) glm::vec3 specular;
+        alignas(16) glm::mat4 rotation;
+        alignas(16) glm::mat4 inverseRotation;
+    };
+
     std::array<SphereData, MAX_SPHERES> spheresData;
+    std::array<BoxData, MAX_SPHERES> boxesData;
     Handle<UniformBuffer> uniformBuffer;
     Handle<ComputeShader> computeShader;
-    Handle<StorageBuffer> spheresBuffer;
+    Handle<StorageBuffer> spheresBuffer, boxesBuffer;
     Handle<Texture> computeTarget;
     Handle<Texture> skybox;
     struct{

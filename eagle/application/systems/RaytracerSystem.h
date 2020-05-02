@@ -11,6 +11,7 @@
 #include <eagle/application/components/DirectionalLight.h>
 #include <eagle/application/components/SceneData.h>
 #include <eagle/application/components/Sphere.h>
+#include <eagle/application/components/Box.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -24,7 +25,9 @@ public:
     void receive(const OnCameraUpdate& ev);
     void receive(const OnLightUpdate& ev);
     void receive(const entityx::ComponentAddedEvent<Sphere>& ev);
+    void receive(const entityx::ComponentAddedEvent<Box>& ev);
     void receive(const entityx::ComponentRemovedEvent<Sphere>& ev);
+    void receive(const entityx::ComponentRemovedEvent<Box>& ev);
 private:
     void init_render_target();
     void handle_context_init();
@@ -34,6 +37,7 @@ private:
     void handle_command_buffer_main_render_pass(const Reference<CommandBuffer>& commandBuffer);
 
     void update_sphere_buffer(entityx::EntityManager &entities);
+    void update_box_buffer(entityx::EntityManager &entities);
 
 private:
     RenderMaster::Event::Listener context_init_callback;
@@ -43,6 +47,7 @@ private:
     RenderMaster::CommandBufferEvent::Listener command_buffer_begin_callback;
     RenderMaster::CommandBufferEvent::Listener command_buffer_main_render_pass_callback;
     bool m_updateSpheres;
+    bool m_updateBoxes;
 };
 
 

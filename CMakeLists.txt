@@ -178,7 +178,7 @@ set(RAYTRACER_INCLUDE
         eagle/application/systems/LightSystem.h
         eagle/application/components/SingletonComponent.h
         eagle/application/components/Sphere.h
-        eagle/application/SceneLayer.h)
+        eagle/application/SceneLayer.h eagle/application/systems/PhysicsSystem.h eagle/application/components/Rigidbody.h eagle/application/components/Box.h eagle/application/systems/CollisionSystem.h eagle/application/components/PhysicsSettings.h)
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
@@ -193,9 +193,9 @@ set(RAYTRACER_SOURCE
         eagle/application/source/systems/RaytracerSystem.cpp
         eagle/application/source/systems/CameraSystem.cpp
         eagle/application/source/systems/LightSystem.cpp
-        eagle/application/source/SceneLayer.cpp)
+        eagle/application/source/SceneLayer.cpp eagle/application/source/systems/PhysicsSystem.cpp)
 
-set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
+set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE} eagle/application/source/systems/CollisionSystem.cpp)
 
 add_library(eagle_raytracer STATIC "${RAYTRACER_ALL}")
 

@@ -59,17 +59,42 @@ void RaytracerSystem::configure(entityx::EntityManager &entities, entityx::Event
     events.subscribe<OnCameraUpdate>(*this);
     events.subscribe<OnLightUpdate>(*this);
     events.subscribe<entityx::ComponentAddedEvent<Sphere>>(*this);
+    events.subscribe<entityx::ComponentAddedEvent<Box>>(*this);
     events.subscribe<entityx::ComponentRemovedEvent<Sphere>>(*this);
+    events.subscribe<entityx::ComponentRemovedEvent<Box>>(*this);
     update_sphere_buffer(entities);
+    update_box_buffer(entities);
 }
 
 void RaytracerSystem::update(entityx::EntityManager &entities, entityx::EventManager &events, entityx::TimeDelta dt) {
-    if (m_updateSpheres){
+
+    for (auto e : entities.entities_with_components<Transform, Sphere>()) {
+        Transform &transform = *e.component<Transform>();
+        if (transform.hasChanged) {
+            m_updateSpheres = true;
+            transform.hasChanged = false;
+        }
+    }
+
+    if (m_updateSpheres) {
         update_sphere_buffer(entities);
         m_updateSpheres = false;
     }
 
-    RaytracerData& data = SingletonComponent::get<RaytracerData>();
+    for (auto e : entities.entities_with_components<Transform, Box>()) {
+        Transform &transform = *e.component<Transform>();
+        if (transform.hasChanged) {
+            m_updateBoxes = true;
+            transform.hasChanged = false;
+        }
+    }
+
+    if (m_updateBoxes) {
+        update_box_buffer(entities);
+        m_updateBoxes = false;
+    }
+
+    RaytracerData &data = SingletonComponent::get<RaytracerData>();
     data.ubo.pixelOffset = glm::vec2(Random::value(), Random::value());
     auto buffer = data.uniformBuffer.lock();
     buffer->set_data(&data.ubo, buffer->size(), 0);
@@ -113,7 +138,13 @@ void RaytracerSystem::init_render_target() {
         data.quad.descriptorSet.lock()->update({data.computeTarget.lock()->get_image().lock()});
     }
 
-    data.computeShader.lock()->update_descriptor_items({data.computeTarget.lock()->get_image().lock(), data.uniformBuffer.lock(), data.spheresBuffer.lock(), data.skybox.lock()->get_image().lock()});
+    data.computeShader.lock()->update_descriptor_items({
+        data.computeTarget.lock()->get_image().lock(),
+        data.uniformBuffer.lock(),
+        data.spheresBuffer.lock(),
+        data.boxesBuffer.lock(),
+        data.skybox.lock()->get_image().lock()
+    });
 
     EventMaster::instance().emit(OnRaytracerTargetCreated(data.computeTarget.lock()->get_image().lock()));
 }
@@ -127,8 +158,8 @@ void RaytracerSystem::handle_context_init() {
     skyboxCreateInfo.usage = TextureUsage::READ;
     data.skybox = RenderMaster::context().create_texture(skyboxCreateInfo);
 
-    data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(),
-                                                                    BufferUsage::DYNAMIC);
+    data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(), BufferUsage::DYNAMIC);
+    data.boxesBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::BoxData) * data.boxesData.size(), data.boxesData.data(), BufferUsage::DYNAMIC);
 
     ShaderPipelineInfo pipelineInfo = {};
     data.quad.shader = RenderMaster::context().create_shader({
@@ -200,6 +231,33 @@ void RaytracerSystem::update_sphere_buffer(entityx::EntityManager &entities) {
     }
 }
 
+void RaytracerSystem::update_box_buffer(entityx::EntityManager &entities) {
+    RaytracerData& data = SingletonComponent::get<RaytracerData>();
+    entityx::ComponentHandle<Transform> transform;
+    entityx::ComponentHandle<Box> box;
+    auto it = data.boxesData.begin();
+    for (auto e : entities.entities_with_components<Transform, Box>(transform, box)){
+        it->radius = box->radius;
+        it->albedo = box->albedo;
+        it->specular = box->specular;
+        it->center = transform->position();
+        it->rotation = glm::mat4_cast(transform->rotation());
+        it->inverseRotation = glm::inverse(it->rotation);
+        it++;
+        if (it == data.boxesData.end()){
+            EG_WARNING("Maximum box capacity reached!");
+            break;
+        }
+    }
+    data.ubo.boxCount = it - data.boxesData.begin();
+    if (auto buffer = data.boxesBuffer.lock()){
+        buffer->set_data(data.boxesData.data(), sizeof(RaytracerData::BoxData) * data.ubo.boxCount, 0);
+        buffer->push();
+        data.ubo.sampleCount = 0;
+    }
+}
+
+
 void RaytracerSystem::receive(const entityx::ComponentAddedEvent<Sphere> &ev) {
     m_updateSpheres = true;
 }
@@ -207,5 +265,15 @@ void RaytracerSystem::receive(const entityx::ComponentAddedEvent<Sphere> &ev) {
 void RaytracerSystem::receive(const entityx::ComponentRemovedEvent<Sphere> &ev) {
     m_updateSpheres = true;
 }
+
+void RaytracerSystem::receive(const entityx::ComponentAddedEvent<Box> &ev) {
+    m_updateBoxes = true;
+}
+
+void RaytracerSystem::receive(const entityx::ComponentRemovedEvent<Box> &ev) {
+    m_updateBoxes = true;
+}
+
+
 
 EG_RAYTRACER_END
