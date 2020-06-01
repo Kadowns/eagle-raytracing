@@ -48,6 +48,10 @@ struct RaytracerData {
         Handle<Shader> shader;
         Handle<DescriptorSet> descriptorSet;
     } quad;
+    struct {
+        Handle<Shader> shader;
+        Handle<VertexBuffer> vertexBuffer;
+    } gizmos;
 
 
 };

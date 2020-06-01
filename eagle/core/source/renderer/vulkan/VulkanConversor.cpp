@@ -550,5 +550,42 @@ Filter VulkanConversor::to_eg(VkFilter filter) {
     return result;
 }
 
+VkPrimitiveTopology VulkanConversor::to_vk(PrimitiveTopology topology) {
+    VkPrimitiveTopology result;
+    switch(topology){
+        case PrimitiveTopology::POINT_LIST:result = VK_PRIMITIVE_TOPOLOGY_POINT_LIST; break;
+        case PrimitiveTopology::LINE_LIST:result = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; break;
+        case PrimitiveTopology::LINE_STRIP:result = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP; break;
+        case PrimitiveTopology::TRIANGLE_LIST:result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST; break;
+        case PrimitiveTopology::TRIANGLE_STRIP:result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP; break;
+        case PrimitiveTopology::TRIANGLE_FAN:result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN; break;
+        case PrimitiveTopology::LINE_LIST_WITH_ADJACENCY:result = VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY; break;
+        case PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY:result = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY; break;
+        case PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY:result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY; break;
+        case PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY:result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; break;
+        case PrimitiveTopology::PATCH_LIST:result = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST; break;
+    }
+    return result;
+}
+
+PrimitiveTopology VulkanConversor::to_eg(VkPrimitiveTopology topology) {
+    PrimitiveTopology result;
+    switch(topology){
+        case VK_PRIMITIVE_TOPOLOGY_POINT_LIST: result = PrimitiveTopology::POINT_LIST; break;
+        case VK_PRIMITIVE_TOPOLOGY_LINE_LIST: result = PrimitiveTopology::LINE_LIST; break;
+        case VK_PRIMITIVE_TOPOLOGY_LINE_STRIP: result = PrimitiveTopology::LINE_STRIP; break;
+        case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: result = PrimitiveTopology::TRIANGLE_LIST; break;
+        case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: result = PrimitiveTopology::TRIANGLE_STRIP; break;
+        case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN: result = PrimitiveTopology::TRIANGLE_FAN; break;
+        case VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY: result = PrimitiveTopology::LINE_LIST_WITH_ADJACENCY; break;
+        case VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY: result = PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY; break;
+        case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY: result = PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY; break;
+        case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY: result = PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY; break;
+        case VK_PRIMITIVE_TOPOLOGY_PATCH_LIST: result = PrimitiveTopology::PATCH_LIST; break;
+        default: throw std::runtime_error("Invalid VkPrimitiveTopology on conversion");
+    }
+    return result;
+}
+
 
 EG_END

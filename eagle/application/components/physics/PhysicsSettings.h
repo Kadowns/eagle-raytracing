@@ -13,6 +13,7 @@ struct PhysicsSettings {
     float accumulator = 0;
     float alpha = 0;
     float fixedStep = 0.01f;
+    glm::vec3 gravity;
 };
 
 struct OnPhysicsUpdate {

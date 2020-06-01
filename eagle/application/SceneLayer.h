@@ -22,10 +22,6 @@ public:
 private:
     void generate_scene();
     glm::vec2 random_inside_unit_circle();
-private:
-    entityx::EventManager m_events;
-    entityx::EntityManager m_entities;
-    entityx::SystemManager m_systems;
 };
 
 EG_RAYTRACER_END

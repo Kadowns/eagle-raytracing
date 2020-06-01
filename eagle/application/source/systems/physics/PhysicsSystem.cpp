@@ -2,11 +2,11 @@
 // Created by Novak on 4/24/2020.
 //
 
-#include <eagle/application/systems/PhysicsSystem.h>
-#include <eagle/application/components/Rigidbody.h>
+#include <eagle/application/systems/physics/PhysicsSystem.h>
+#include <eagle/application/components/physics/Rigidbody.h>
 #include <eagle/application/components/Transform.h>
 #include <eagle/application/components/Sphere.h>
-#include <eagle/application/components/PhysicsSettings.h>
+#include <eagle/application/components/physics/PhysicsSettings.h>
 #include <eagle/application/components/SingletonComponent.h>
 
 EG_RAYTRACER_BEGIN
@@ -43,14 +43,29 @@ void PhysicsSystem::update(entityx::EntityManager &entities, entityx::EventManag
 }
 
 void PhysicsSystem::update_physics(entityx::EntityManager &entities, entityx::EventManager &events, float dt) {
-
-    events.emit<OnPhysicsUpdate>(entities, events, dt);
+    auto& settings = SingletonComponent::get<PhysicsSettings>();
 
     entityx::ComponentHandle<Rigidbody> rigidbody;
     for (auto e : entities.entities_with_components<Rigidbody>(rigidbody)){
-        rigidbody->previous = rigidbody->current;
-        rigidbody->velocity += glm::vec3(0, -9.98f * dt, 0);
+        if (rigidbody->mode == Rigidbody::Mode::STATIC){
+            continue;
+        }
+
+        glm::mat3 rotation = glm::mat3_cast(rigidbody->current.rotation);
+        rigidbody->inverseInertiaWorld = rotation * rigidbody->inverseInertiaModel * glm::transpose(rotation);
+        rigidbody->velocity += settings.gravity * dt;
         rigidbody->velocity *= (1 - dt * rigidbody->drag);
+        rigidbody->angularVelocity *= (1 - dt * rigidbody->drag);
+    }
+
+    events.emit<OnPhysicsUpdate>(entities, events, dt);
+
+    for (auto e : entities.entities_with_components<Rigidbody>(rigidbody)){
+        if (rigidbody->mode == Rigidbody::Mode::STATIC){
+            continue;
+        }
+
+        rigidbody->previous = rigidbody->current;
         rigidbody->current.position += rigidbody->velocity * dt;
         rigidbody->current.rotation *= glm::quat(rigidbody->angularVelocity * dt);
         rigidbody->current.rotation = glm::normalize(rigidbody->current.rotation);

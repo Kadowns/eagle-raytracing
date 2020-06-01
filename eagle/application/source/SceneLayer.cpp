@@ -10,39 +10,54 @@
 #include <eagle/application/systems/RaytracerSystem.h>
 #include <eagle/application/systems/LightSystem.h>
 #include <eagle/application/systems/CameraSystem.h>
-#include <eagle/application/systems/PhysicsSystem.h>
-#include <eagle/application/systems/CollisionSystem.h>
+#include <eagle/application/systems/physics/PhysicsSystem.h>
+#include <eagle/application/systems/physics/CollisionSystem.h>
 #include <eagle/application/components/SingletonComponent.h>
 #include <eagle/application/components/Sphere.h>
-#include <eagle/application/components/Rigidbody.h>
+#include <eagle/application/components/physics/Rigidbody.h>
+#include <eagle/application/components/physics/shapes/PlaneCollider.h>
+#include <eagle/application/components/physics/shapes/SphereCollider.h>
+#include <eagle/application/components/physics/shapes/BoxCollider.h>
+#include <eagle/application/systems/SpawnerSystem.h>
+#include <eagle/application/components/Spawner.h>
+#include <eagle/application/SceneManager.h>
 
 EG_RAYTRACER_BEGIN
 
-SceneLayer::SceneLayer() :
-    m_entities(m_events),
-    m_systems(m_entities, m_events){
+SceneLayer::SceneLayer() {
 
 }
 
 void SceneLayer::handle_attach() {
 
-    auto camera = m_entities.create();
-    camera.assign<Camera>();
-    camera.assign<Transform>(glm::vec3(0, 10, -20), glm::quat(glm::vec3(0)), glm::vec3(1));
-    camera.assign<CameraController>();
+    Scene& scene = SceneManager::current_scene();
 
-    auto light = m_entities.create();
+    auto camera = scene.entities.create();
+    camera.assign<Camera>();
+    camera.assign<Transform>(glm::vec3(0, 10, 0), glm::quat(glm::vec3(0)), glm::vec3(1));
+    camera.assign<CameraController>();
+    camera.assign<Spawner>();
+
+    auto light = scene.entities.create();
     light.assign<DirectionalLight>();
     light.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(glm::vec3(-30, 0, 0))), glm::vec3(1))->hasChanged = true;
 
-    generate_scene();
+    auto plane = scene.entities.create();
+    plane.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(glm::vec3(0, 45, 0))), glm::vec3(1));
+    plane.assign<Rigidbody>(0.0f, 0.0f, 0.2f, Rigidbody::Mode::STATIC);
+    //plane.assign<Collider>(std::make_shared<PlaneCollider>(glm::vec3(0, 1, 0), 0));
+    plane.assign<Collider>(std::make_shared<BoxCollider>(glm::vec3(25.0f, 25.0f, 25.0f)));
+    plane.assign<Box>(glm::vec3(25.0f, 25.0f, 25.0f), glm::vec3(0.12f), glm::vec3(0.245f));
 
-    m_systems.add<CameraSystem>();
-    m_systems.add<LightSystem>();
-    m_systems.add<PhysicsSystem>();
-    m_systems.add<CollisionSystem>();
-    m_systems.add<RaytracerSystem>();
-    m_systems.configure();
+   // generate_scene();
+
+    scene.systems.add<CameraSystem>();
+    scene.systems.add<SpawnerSystem>();
+    scene.systems.add<LightSystem>();
+    scene.systems.add<PhysicsSystem>();
+    scene.systems.add<CollisionSystem>();
+    scene.systems.add<RaytracerSystem>();
+    scene.systems.configure();
 }
 
 void SceneLayer::handle_deattach() {
@@ -50,7 +65,7 @@ void SceneLayer::handle_deattach() {
 }
 
 void SceneLayer::handle_update() {
-    m_systems.update_all(Time::delta_time());
+    SceneManager::current_scene().systems.update_all(Time::delta_time());
 }
 
 void SceneLayer::handle_event(Event &e) {
@@ -58,19 +73,20 @@ void SceneLayer::handle_event(Event &e) {
 }
 
 void SceneLayer::generate_scene() {
-    SceneData& scene = SingletonComponent::get<SceneData>();
-    for (int i = 0; i < scene.maxSphereCount; i++) {
-        auto e = m_entities.create();
+    SceneData& sceneSettings = SingletonComponent::get<SceneData>();
+    Scene& scene = SceneManager::current_scene();
+    for (int i = 0; i < sceneSettings.maxSphereCount; i++) {
+        auto e = scene.entities.create();
         auto sphere = e.assign<Sphere>();
         auto transform = e.assign<Transform>();
         e.assign<Rigidbody>();
         // Radius and radius
-        sphere->radius = scene.sphereSizes.x + Random::value() * (scene.sphereSizes.y - scene.sphereSizes.x);
-        glm::vec2 randomPos = random_inside_unit_circle() * scene.spherePlacementRadius;
+        sphere->radius = sceneSettings.sphereSizes.x + Random::value() * (sceneSettings.sphereSizes.y - sceneSettings.sphereSizes.x);
+        glm::vec2 randomPos = random_inside_unit_circle() * sceneSettings.spherePlacementRadius;
         transform->set_position(glm::vec3(randomPos.x, sphere->radius, randomPos.y));
         // Reject spheres that are intersecting others
         bool skipSphere = false;
-        for (auto other : m_entities.entities_with_components<Sphere, Transform>()) {
+        for (auto other : scene.entities.entities_with_components<Sphere, Transform>()) {
             if (e == other) continue;
 
             auto otherSphere = other.component<Sphere>();
@@ -87,9 +103,11 @@ void SceneLayer::generate_scene() {
         }
         // Albedo and specular color
         glm::vec3 color = glm::vec3(Random::value(), Random::value(), Random::value());
-        bool metal = Random::value() < scene.metalPercent;
+        bool metal = Random::value() < sceneSettings.metalPercent;
         sphere->albedo = metal ? glm::vec3(0.01f) : glm::vec3(color.r, color.g, color.b);
         sphere->specular = metal ? glm::vec3(color.r, color.g, color.b) : glm::vec3(0.01f);
+        e.assign<Collider>(std::make_shared<SphereCollider>(sphere->radius));
+
     }
 }
 

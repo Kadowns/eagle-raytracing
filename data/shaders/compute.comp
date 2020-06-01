@@ -147,15 +147,15 @@ void IntersectBox(Ray ray, inout RayHit bestHit, Box box) {
         bestHit.distance = (sgn.x != 0) ? d.x : ((sgn.y != 0) ? d.y : d.z);
         bestHit.normal = sgn * mat3(box.inverseRotation);
         bestHit.position = originalRay.origin + originalRay.direction * bestHit.distance;
-        bestHit.albedo =  box.albedo;
-        bestHit.specular = box.specular;
+        bestHit.albedo =  test.x ? vec3(0.0, 0.0, 1.0) : test.y ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+        bestHit.specular = bestHit.albedo;
     }
 }
 
 
 RayHit Trace(Ray ray) {
     RayHit bestHit = CreateRayHit();
-    IntersectGroundPlane(ray, bestHit);
+    //IntersectGroundPlane(ray, bestHit);
 
     for (int i = 0; i < ubo.boxCount; i++){
         IntersectBox(ray, bestHit, uBoxBuffer.boxes[i]);
@@ -211,8 +211,13 @@ void main() {
         RayHit hit = Trace(ray);
         result += ray.energy * Shade(ray, hit);
         if (ray.energy == vec3(0))
-            break;
+        break;
     }
     vec4 dst = imageLoad(resultImage, id);
     imageStore(resultImage, id, blend(vec4(result, 1.0f / (ubo.sampleIndex + 1.0f)), dst));
+
+//    RayHit hit = Trace(ray);
+//    float dist = hit.distance / 100;
+//    imageStore(resultImage, id, vec4(dist, dist, dist, 1.0f));
+
 }

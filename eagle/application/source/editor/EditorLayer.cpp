@@ -6,12 +6,13 @@
 #include <eagle/application/renderer/RenderLayer.h>
 #include <eagle/application/editor/EditorDockingWindow.h>
 #include <eagle/application/editor/SceneWindow.h>
+#include <eagle/application/editor/DebugSettingsWindow.h>
 
 EG_RAYTRACER_BEGIN
 
 EditorLayer::EditorLayer() {
     //EditorMaster::add_window(std::make_shared<EditorDockingWindow>());
-    //EditorMaster::add_window(std::make_shared<SceneWindow>());
+    EditorMaster::add_window(std::make_shared<DebugSettingsWindow>());
 }
 
 EditorLayer::~EditorLayer() {

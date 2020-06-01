@@ -18,6 +18,7 @@ struct ShaderPipelineInfo {
     bool dynamicStates;
     bool offscreenRendering;
     VertexLayout vertexLayout;
+    PrimitiveTopology primitiveTopology = PrimitiveTopology::TRIANGLE_LIST;
     struct{
         float x = 0, y = 0;
         float widthPercent = 1, heightPercent = 1;

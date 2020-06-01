@@ -19,6 +19,8 @@ public:
     static DescriptorType   to_eg(VkDescriptorType type);
     static VkFilter           to_vk(Filter filter);
     static Filter           to_eg(VkFilter filter);
+    static VkPrimitiveTopology to_vk(PrimitiveTopology topology);
+    static PrimitiveTopology to_eg(VkPrimitiveTopology topology);
 };
 
 EG_END

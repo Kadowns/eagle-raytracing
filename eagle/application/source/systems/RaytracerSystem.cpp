@@ -132,7 +132,10 @@ void RaytracerSystem::init_render_target() {
         buffer->push();
     }
     if (!data.quad.descriptorSet.lock()){
-        data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(data.quad.shader.lock()->get_descriptor_set_layout(0).lock(), {data.computeTarget.lock()->get_image().lock()});
+        data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(
+                data.quad.shader.lock()->get_descriptor_set_layout(0).lock(),
+                {data.computeTarget.lock()->get_image().lock()}
+                );
     }
     else{
         data.quad.descriptorSet.lock()->update({data.computeTarget.lock()->get_image().lock()});
@@ -168,6 +171,23 @@ void RaytracerSystem::handle_context_init() {
     }, pipelineInfo);
 
 
+//    pipelineInfo.primitiveTopology = PrimitiveTopology::LINE_LIST;
+//    pipelineInfo.depthTesting = true;
+//    pipelineInfo.vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
+//    data.gizmos.shader = RenderMaster::context().create_shader({
+//        {ShaderStage::VERTEX, ProjectRoot + "/shaders/gizmos.vert"},
+//        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/gizmos.frag"},
+//    }, pipelineInfo);
+//
+//    std::vector<float> vertices = {
+//            -1.0f, 0.0f, 0.0f,
+//            1.0f, 0.0f, 0.0f,
+//            0.0f, -1.0f, 0.0f,
+//            0.0f, 1.0f, 0.0f,
+//    };
+//
+//    data.gizmos.vertexBuffer = RenderMaster::context().create_vertex_buffer(vertices.data(), vertices.size(), pipelineInfo.vertexLayout, BufferUsage::CONSTANT);
+
     init_render_target();
 }
 
@@ -191,6 +211,10 @@ void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<Com
     commandBuffer->bind_shader(data.quad.shader.lock());
     commandBuffer->bind_descriptor_sets(data.quad.descriptorSet.lock(), 0);
     commandBuffer->draw(3);
+
+//    commandBuffer->bind_shader(data.gizmos.shader.lock());
+//    commandBuffer->bind_vertex_buffer(data.gizmos.vertexBuffer.lock());
+//    commandBuffer->draw(4);
 }
 
 void RaytracerSystem::receive(const OnCameraUpdate &ev) {

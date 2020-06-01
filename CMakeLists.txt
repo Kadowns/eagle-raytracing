@@ -178,7 +178,7 @@ set(RAYTRACER_INCLUDE
         eagle/application/systems/LightSystem.h
         eagle/application/components/SingletonComponent.h
         eagle/application/components/Sphere.h
-        eagle/application/SceneLayer.h eagle/application/systems/PhysicsSystem.h eagle/application/components/Rigidbody.h eagle/application/components/Box.h eagle/application/systems/CollisionSystem.h eagle/application/components/PhysicsSettings.h)
+        eagle/application/SceneLayer.h eagle/application/systems/physics/PhysicsSystem.h eagle/application/components/physics/Rigidbody.h eagle/application/components/Box.h eagle/application/systems/physics/CollisionSystem.h eagle/application/components/physics/PhysicsSettings.h eagle/application/components/physics/Collider.h eagle/application/components/physics/shapes/ColliderShape.h eagle/application/components/physics/shapes/SphereCollider.h eagle/application/systems/physics/collision/CollisionManager.h eagle/application/systems/physics/collision/Collision.h eagle/application/components/physics/shapes/PlaneCollider.h eagle/application/systems/physics/collision/CollisionSolver.h eagle/application/components/physics/CollisionSettings.h eagle/application/editor/DebugSettingsWindow.h eagle/application/systems/SpawnerSystem.h eagle/application/components/Spawner.h eagle/application/SceneManager.h)
 
 set(RAYTRACER_SOURCE
         eagle/application/source/renderer/RenderLayer.cpp
@@ -193,9 +193,9 @@ set(RAYTRACER_SOURCE
         eagle/application/source/systems/RaytracerSystem.cpp
         eagle/application/source/systems/CameraSystem.cpp
         eagle/application/source/systems/LightSystem.cpp
-        eagle/application/source/SceneLayer.cpp eagle/application/source/systems/PhysicsSystem.cpp)
+        eagle/application/source/SceneLayer.cpp eagle/application/source/systems/physics/PhysicsSystem.cpp eagle/application/source/systems/physics/collision/shapes/SphereCollider.cpp eagle/application/source/systems/physics/collision/shapes/ColliderShape.cpp eagle/application/components/physics/shapes/BoxCollider.h eagle/application/source/systems/physics/collision/shapes/BoxCollider.cpp eagle/application/source/systems/physics/collision/CollisionManager.cpp eagle/application/source/systems/physics/collision/shapes/PlaneCollider.cpp eagle/application/source/systems/physics/collision/CollisionSolver.cpp eagle/application/source/editor/DebugSettingsWindow.cpp eagle/application/source/systems/SpawnerSystem.cpp)
 
-set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE} eagle/application/source/systems/CollisionSystem.cpp)
+set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE} eagle/application/source/systems/physics/CollisionSystem.cpp)
 
 add_library(eagle_raytracer STATIC "${RAYTRACER_ALL}")
 

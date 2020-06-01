@@ -10,6 +10,8 @@
 EG_RAYTRACER_BEGIN
 
 struct Box {
+    Box(){}
+    Box(const glm::vec3& radius, const glm::vec3& albedo, const glm::vec3& specular) : radius(radius), albedo(albedo), specular(specular) {}
     glm::vec3 radius;
     glm::vec3 albedo;
     glm::vec3 specular;

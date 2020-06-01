@@ -8,7 +8,7 @@
 #include <eagle/application/RaytracerApplicationGlobalDefinitions.h>
 #include <eagle/application/components/Transform.h>
 #include <eagle/application/components/Sphere.h>
-#include <eagle/application/components/Rigidbody.h>
+#include <eagle/application/components/physics/Rigidbody.h>
 #include <eagle/application/components/Box.h>
 
 EG_RAYTRACER_BEGIN
