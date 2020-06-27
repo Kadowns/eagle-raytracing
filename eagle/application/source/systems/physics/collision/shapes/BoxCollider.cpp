@@ -33,4 +33,15 @@ glm::vec3 BoxCollider::compute_axis_inertia(Rigidbody &rigidbody) const {
     return glm::vec3(x, y, z);
 }
 
+void BoxCollider::compute_aabb(const Rigidbody::Transform &transform) {
+    m_aabb.max = glm::vec3(-std::numeric_limits<float>::max());
+    m_aabb.min = glm::vec3(std::numeric_limits<float>::max());
+    for (uint32_t i = 0; i < m_vertices.size(); i++){
+        glm::vec3 v = (transform.rotation * m_vertices[i]) + transform.position;
+        m_aabb.max = glm::max(m_aabb.max, v);
+        m_aabb.min = glm::min(m_aabb.min, v);
+    }
+}
+
+
 EG_RAYTRACER_END

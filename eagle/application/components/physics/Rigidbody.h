@@ -22,23 +22,29 @@ struct Rigidbody {
     };
 
 
-    Rigidbody(float mass = 1.0f, float drag = 0.5f, float restitution = 0.5f, Mode mode = Mode::DYNAMIC)
-    : velocity(0), angularVelocity(0), mass(mass), inverseMass(mass != 0 ? 1 / mass : 0), drag(drag), restitution(restitution), mode(mode) {}
-    glm::vec3 velocity;
-    glm::vec3 angularVelocity;
+    Rigidbody(float mass = 1.0f, float drag = 0.5f, float restitution = 0.2f, float friction = 0.4f, Mode mode = Mode::DYNAMIC)
+    : velocity(0), force(0), angularVelocity(0), torque(0), mass(mass), inverseMass(mass != 0 ? 1 / mass : 0), drag(drag), restitution(restitution), friction(friction), mode(mode) {}
+    glm::vec3 velocity, force;
+    glm::vec3 angularVelocity, torque;
     float mass, inverseMass;
     float drag;
     float restitution;
+    float friction;
     glm::mat3 inverseInertiaModel, inverseInertiaWorld;
     Transform previous, current;
     Mode mode;
 
-    inline void apply_force(const glm::vec3& force){
-        velocity += inverseMass * force;
+    inline void apply_force(const glm::vec3& f){
+        force += mass * f;
     }
 
-    inline void apply_torque(const glm::vec3& torque){
-        angularVelocity += torque;
+    inline void apply_torque(const glm::vec3& t){
+        torque += t;
+    }
+
+    inline void apply_force_at_world_point(const glm::vec3& f, const glm::vec3 &point) {
+        force += mass * f;
+        torque += glm::cross(point - current.position, f);
     }
 
     inline void apply_impulse_at_world_point(const glm::vec3& impulse, const glm::vec3& point){

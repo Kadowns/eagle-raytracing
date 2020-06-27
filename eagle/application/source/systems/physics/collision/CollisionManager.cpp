@@ -25,19 +25,49 @@ void CollisionManager::configure() {
     m_collisionFunctionTable[typeid(BoxCollider)][typeid(BoxCollider)] = box_vs_box;
 }
 
-bool CollisionManager::test_collision(Collision &collision) {
-    if (m_collisionFunctionTable[collision.colA->shape->type()][collision.colB->shape->type()](collision)){
-        collision.restitution = std::max(collision.rbA->restitution, collision.rbB->restitution);
+void CollisionManager::test_collision(const Collision &collision) {
+
+    collision.contacts.clear();
+
+    m_collisionFunctionTable[collision.colA->shape->type()][collision.colB->shape->type()](collision);
+
+    if (collision){
         for (auto& contact : collision.contacts){
             contact.rA = contact.position - collision.rbA->current.position;
             contact.rB = contact.position - collision.rbB->current.position;
         }
-        return true;
+        if (collision.phase & Collision::COLLIDING_BIT){
+            collision.phase |= Collision::WAS_COLLIDING_BIT;
+        }
+        else {
+            collision.phase |= Collision::COLLIDING_BIT;
+        }
     }
-    return false;
+    else {
+        if (collision.phase & Collision::COLLIDING_BIT){
+            collision.phase &= ~Collision::COLLIDING_BIT;
+            collision.phase |= Collision::WAS_COLLIDING_BIT;
+        }
+        else {
+            collision.phase &= ~Collision::WAS_COLLIDING_BIT;
+        }
+    }
 }
 
-bool CollisionManager::sphere_vs_sphere(Collision &collision) {
+bool CollisionManager::test_aabb(const ColliderShape::AABB &a, const ColliderShape::AABB &b) {
+    if (a.max.x < b.min.x || b.max.x < a.min.x){
+        return false;
+    }
+    if (a.max.y < b.min.y || b.max.y < a.min.y){
+        return false;
+    }
+    if (a.max.z < b.min.z || b.max.z < a.min.z){
+        return false;
+    }
+    return true;
+}
+
+void CollisionManager::sphere_vs_sphere(const Collision &collision) {
     Reference<SphereCollider> s1 = std::static_pointer_cast<SphereCollider>(collision.colA->shape);
     Reference<SphereCollider> s2 = std::static_pointer_cast<SphereCollider>(collision.colB->shape);
 
@@ -47,7 +77,7 @@ bool CollisionManager::sphere_vs_sphere(Collision &collision) {
     float r = s1->radius() + s2->radius();
     float sqrDistance = glm::distance2(p1, p2);
     if (r * r < sqrDistance){
-        return false;
+        return;
     }
 
     float distance = std::sqrt(sqrDistance);
@@ -56,13 +86,12 @@ bool CollisionManager::sphere_vs_sphere(Collision &collision) {
     collision.normal = (p2 - p1) / distance;
     contact.penetration = distance - r;
     contact.position = p1 + collision.normal * s1->radius();
+    contact.key = 0;
 
     collision.contacts.emplace_back(contact);
-
-    return true;
 }
 
-bool CollisionManager::sphere_vs_plane(Collision &collision) {
+void CollisionManager::sphere_vs_plane(const Collision &collision) {
     Reference<SphereCollider> s = std::static_pointer_cast<SphereCollider>(collision.colA->shape);
     Reference<PlaneCollider> p = std::static_pointer_cast<PlaneCollider>(collision.colB->shape);
 
@@ -74,53 +103,91 @@ bool CollisionManager::sphere_vs_plane(Collision &collision) {
 
     float sphereHeightFromRadius = rotatedSp.y - s->radius();
     if (sphereHeightFromRadius > -p->distance()){
-        return false;
+        return;
     }
 
     Collision::Contact contact = {};
     collision.normal = -p->normal();
     contact.position = sp + (collision.normal * s->radius());
     contact.penetration = sphereHeightFromRadius - p->distance();
+    contact.key = 0;
 
     collision.contacts.emplace_back(contact);
-
-    return true;
 }
 
-bool CollisionManager::sphere_vs_box(Collision &collision) {
-    return false;
+void CollisionManager::sphere_vs_box(const Collision &collision) {
+    Reference<SphereCollider> sphere = std::static_pointer_cast<SphereCollider>(collision.colA->shape);
+    Reference<BoxCollider> box = std::static_pointer_cast<BoxCollider>(collision.colB->shape);
+
+    glm::vec3 spherePosition = collision.rbA->current.position;
+    float sphereRadius = sphere->radius();
+
+    glm::vec3 boxPosition = collision.rbB->current.position;
+    glm::vec3 boxExtents = box->extents();
+    glm::mat3 boxRotation = glm::mat3_cast(collision.rbB->current.rotation);
+
+
+    glm::vec3 t = (spherePosition - boxPosition) * boxRotation;
+    glm::vec3 localClosestPoint = glm::clamp(t, -boxExtents, boxExtents);
+    glm::vec3 worldClosestPoint = localClosestPoint * glm::inverse(boxRotation) + boxPosition;
+
+    float distanceToClosestPoint = glm::distance(spherePosition, worldClosestPoint);
+
+    if (distanceToClosestPoint > sphereRadius){
+        return;
+    }
+
+    Collision::Contact contact = {};
+    contact.position = worldClosestPoint;
+    contact.penetration = sphereRadius - distanceToClosestPoint;
+    contact.key = 0;
+    collision.normal = (worldClosestPoint - spherePosition) / distanceToClosestPoint;
+    collision.contacts.emplace_back(contact);
 }
 
-bool CollisionManager::plane_vs_sphere(Collision &collision) {
-    std::swap(collision.colA, collision.colB);
-    std::swap(collision.rbA, collision.rbB);
-    return sphere_vs_plane(collision);
+void CollisionManager::plane_vs_sphere(const Collision &collision) {
+
+    Collision temp = collision;
+    std::swap(temp.colA, temp.colB);
+    std::swap(temp.rbA, temp.rbB);
+    sphere_vs_plane(temp);
+    std::swap(collision.contacts, temp.contacts);
+    collision.normal = -temp.normal;
 }
 
-bool CollisionManager::plane_vs_plane(Collision &collision) {
-    return false;
+void CollisionManager::plane_vs_plane(const Collision &collision) {
+
 }
 
-bool CollisionManager::plane_vs_box(Collision &collision) {
-    std::swap(collision.colA, collision.colB);
-    std::swap(collision.rbA, collision.rbB);
-    return box_vs_plane(collision);
+void CollisionManager::plane_vs_box(const Collision &collision) {
+
+    Collision temp = collision;
+    std::swap(temp.colA, temp.colB);
+    std::swap(temp.rbA, temp.rbB);
+    box_vs_plane(temp);
+    std::swap(collision.contacts, temp.contacts);
+    collision.normal = -temp.normal;
 }
 
-bool CollisionManager::box_vs_sphere(Collision &collision) {
-    return false;
+void CollisionManager::box_vs_sphere(const Collision &collision) {
+
+    Collision temp = collision;
+    std::swap(temp.colA, temp.colB);
+    std::swap(temp.rbA, temp.rbB);
+    sphere_vs_box(temp);
+    std::swap(collision.contacts, temp.contacts);
+    collision.normal = -temp.normal;
 }
 
-bool CollisionManager::box_vs_plane(Collision &collision) {
+void CollisionManager::box_vs_plane(const Collision &collision) {
     Reference<BoxCollider> box = std::static_pointer_cast<BoxCollider>(collision.colA->shape);
     Reference<PlaneCollider> plane = std::static_pointer_cast<PlaneCollider>(collision.colB->shape);
     glm::mat3 planeRotation = glm::orientation(plane->normal(), glm::vec3(0, 1, 0));
     glm::mat3 boxRotation = glm::mat3_cast(collision.rbA->current.rotation);
     glm::vec3 boxPosition = collision.rbA->current.position;
-    return false;
 }
 
-bool CollisionManager::box_vs_box(Collision &collision) {
+void CollisionManager::box_vs_box(const Collision &collision) {
     Reference<BoxCollider> boxA = std::static_pointer_cast<BoxCollider>(collision.colA->shape);
     Reference<BoxCollider> boxB = std::static_pointer_cast<BoxCollider>(collision.colB->shape);
 
@@ -173,37 +240,37 @@ bool CollisionManager::box_vs_box(Collision &collision) {
     // a's x axis
     s = std::abs(t.x) - (eA.x + glm::dot(glm::row(absC, 0), eB));
     if (track_face_axis(aAxis, 0, s, aMax, nA, rotA[0])) {
-        return false;
+        return;
     }
 
     // a's y axis
     s = std::abs(t.y) - (eA.y + glm::dot(glm::row(absC, 1), eB));
     if (track_face_axis(aAxis, 1, s, aMax, nA, rotA[1])) {
-        return false;
+        return;
     }
 
     // a's y axis
     s = std::abs(t.z) - (eA.z + glm::dot(glm::row(absC, 2), eB));
     if (track_face_axis(aAxis, 2, s, aMax, nA, rotA[2])) {
-        return false;
+        return;
     }
 
     // b's x axis
     s = std::abs(glm::dot(t, C[0])) - (eB.x + glm::dot(absC[0], eA));
     if (track_face_axis(bAxis, 3, s, bMax, nB, rotB[0])) {
-        return false;
+        return;
     }
 
     // b's y axis
     s = std::abs(glm::dot(t, C[1])) - (eB.y + glm::dot(absC[1], eA));
     if (track_face_axis(bAxis, 4, s, bMax, nB, rotB[1])) {
-        return false;
+        return;
     }
 
     // b's z axis
     s = std::abs(glm::dot(t, C[2])) - (eB.z + glm::dot(absC[2], eA));
     if (track_face_axis(bAxis, 5, s, bMax, nB, rotB[2])) {
-        return false;
+        return;
     }
 
     if (!parallel) {
@@ -217,7 +284,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.y * absC[2][0] + eB.z * absC[1][0];
         s = std::abs(t.z * C[0][1] - t.y * C[0][2]) - (rA + rB);
         if (track_face_edge(eAxis, 6, s, eMax, nE, glm::vec3(0.0, -C[0][2], C[0][1]))) {
-            return false;
+            return;
         }
 
         // Cross( a.x, b.y )
@@ -225,7 +292,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[2][0] + eB.z * absC[0][0];
         s = std::abs(t.z * C[1][1] - t.y * C[1][2]) - (rA + rB);
         if (track_face_edge(eAxis, 7, s, eMax, nE, glm::vec3(0.0, -C[1][2], C[1][1]))) {
-            return false;
+            return;
         }
 
         // Cross( a.x, b.z )
@@ -233,7 +300,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[1][0] + eB.y * absC[0][0];
         s = std::abs(t.z * C[2][1] - t.y * C[2][2]) - (rA + rB);
         if (track_face_edge(eAxis, 8, s, eMax, nE, glm::vec3(0.0, -C[2][2], C[2][1]))) {
-            return false;
+            return;
         }
 
         // Cross( a.y, b.x )
@@ -241,7 +308,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.y * absC[2][1] + eB.z * absC[1][1];
         s = std::abs(t.x * C[0][2] - t.z * C[0][0]) - (rA + rB);
         if (track_face_edge(eAxis, 9, s, eMax, nE, glm::vec3(C[0][2], 0.0, -C[0][0]))) {
-            return false;
+            return;
         }
 
         // Cross( a.y, b.y )
@@ -249,7 +316,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[2][1] + eB.z * absC[0][1];
         s = std::abs(t.x * C[1][2] - t.z * C[1][0]) - (rA + rB);
         if (track_face_edge(eAxis, 10, s, eMax, nE, glm::vec3(C[1][2], 0.0, -C[1][0]))) {
-            return false;
+            return;
         }
 
         // Cross( a.y, b.z )
@@ -257,7 +324,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[1][1] + eB.y * absC[0][1];
         s = std::abs(t.x * C[2][2] - t.z * C[2][0]) - (rA + rB);
         if (track_face_edge(eAxis, 11, s, eMax, nE, glm::vec3(C[2][2], 0.0, -C[2][0]))) {
-            return false;
+            return;
         }
 
         // Cross( a.z, b.x )
@@ -265,7 +332,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.y * absC[2][2] + eB.z * absC[1][2];
         s = std::abs(t.y * C[0][0] - t.x * C[0][1]) - (rA + rB);
         if (track_face_edge(eAxis, 12, s, eMax, nE, glm::vec3(-C[0][1], C[0][0], 0.0))) {
-            return false;
+            return;
         }
 
         // Cross( a.z, b.y )
@@ -273,7 +340,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[2][2] + eB.z * absC[0][2];
         s = std::abs(t.y * C[1][0] - t.x * C[1][1]) - (rA + rB);
         if (track_face_edge(eAxis, 13, s, eMax, nE, glm::vec3(-C[1][1], C[1][0], 0.0))) {
-            return false;
+            return;
         }
 
         // Cross( a.z, b.z )
@@ -281,7 +348,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         rB = eB.x * absC[1][2] + eB.y * absC[0][2];
         s = std::abs(t.y * C[2][0] - t.x * C[2][1]) - (rA + rB);
         if (track_face_edge(eAxis, 14, s, eMax, nE, glm::vec3(-C[2][1], C[2][0], 0.0))) {
-            return false;
+            return;
         }
     }
 
@@ -313,7 +380,7 @@ bool CollisionManager::box_vs_box(Collision &collision) {
     }
 
     if (axis == ~0){
-        return false;
+        return;
     }
 
     if (axis < 6) {
@@ -357,9 +424,9 @@ bool CollisionManager::box_vs_box(Collision &collision) {
                 Collision::Contact contact = {};
                 contact.position = out[i];
                 contact.penetration = depths[i];
+//                contact.key = axis;
                 collision.contacts.emplace_back(contact);
             }
-            return true;
         }
     }
     else {
@@ -383,10 +450,9 @@ bool CollisionManager::box_vs_box(Collision &collision) {
         Collision::Contact contact = {};
         contact.penetration = sMax;
         contact.position = position;
+        contact.key = axis;
         collision.contacts.emplace_back(contact);
-        return true;
     }
-    return false;
 }
 
 bool CollisionManager::track_face_axis(int32_t &axis, int32_t axisNumber, float s, float &sMax, glm::vec3& axisNormal, const glm::vec3 &normal) {

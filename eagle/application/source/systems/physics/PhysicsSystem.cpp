@@ -23,15 +23,21 @@ void PhysicsSystem::configure(entityx::EntityManager &entities, entityx::EventMa
 }
 
 void PhysicsSystem::update(entityx::EntityManager &entities, entityx::EventManager &events, entityx::TimeDelta dt) {
+
+
     auto& settings = SingletonComponent::get<PhysicsSettings>();
     settings.accumulator += dt;
     settings.accumulator = std::min(settings.accumulator, 0.2f);
-    while (settings.accumulator > settings.fixedStep){
-        update_physics(entities, events, settings.fixedStep);
-        settings.accumulator -= settings.fixedStep;
+
+    float fixedStep = settings.fixedStep * Time::time_scale();
+    if (fixedStep > 0) {
+        while (settings.accumulator > fixedStep) {
+            update_physics(entities, events, fixedStep);
+            settings.accumulator -= fixedStep;
+        }
     }
 
-    settings.alpha = settings.accumulator / settings.fixedStep;
+    settings.alpha = settings.accumulator / fixedStep;
 
     //transform interpolation
     entityx::ComponentHandle<Transform> transform;
@@ -51,11 +57,23 @@ void PhysicsSystem::update_physics(entityx::EntityManager &entities, entityx::Ev
             continue;
         }
 
+        rigidbody->apply_force(settings.gravity);
+
         glm::mat3 rotation = glm::mat3_cast(rigidbody->current.rotation);
         rigidbody->inverseInertiaWorld = rotation * rigidbody->inverseInertiaModel * glm::transpose(rotation);
-        rigidbody->velocity += settings.gravity * dt;
-        rigidbody->velocity *= (1 - dt * rigidbody->drag);
-        rigidbody->angularVelocity *= (1 - dt * rigidbody->drag);
+
+        rigidbody->velocity += (rigidbody->force * rigidbody->inverseMass) * dt;
+        rigidbody->angularVelocity += (rigidbody->inverseInertiaWorld * rigidbody->torque) * dt;
+
+        //drag
+//        rigidbody->velocity *= (1 - dt * rigidbody->drag);
+//        rigidbody->angularVelocity *= (1 - dt * rigidbody->drag);
+
+        rigidbody->velocity *=  1.0  / ( 1.0  + dt * rigidbody->drag);
+        rigidbody->angularVelocity *=  1.0  / ( 1.0  + dt * rigidbody->drag);
+
+        rigidbody->force = glm::vec3(0);
+        rigidbody->torque = glm::vec3(0);
     }
 
     events.emit<OnPhysicsUpdate>(entities, events, dt);
@@ -67,8 +85,7 @@ void PhysicsSystem::update_physics(entityx::EntityManager &entities, entityx::Ev
 
         rigidbody->previous = rigidbody->current;
         rigidbody->current.position += rigidbody->velocity * dt;
-        rigidbody->current.rotation *= glm::quat(rigidbody->angularVelocity * dt);
-        rigidbody->current.rotation = glm::normalize(rigidbody->current.rotation);
+        integrate(rigidbody->current.rotation, rigidbody->angularVelocity, dt);
     }
 }
 
@@ -80,6 +97,19 @@ void PhysicsSystem::receive(const entityx::ComponentAddedEvent<Rigidbody>& ev) {
     rigidbody->current.position = transform->position();
     rigidbody->current.rotation = transform->rotation();
     rigidbody->previous = rigidbody->current;
+}
+
+void PhysicsSystem::integrate(glm::quat &t, const glm::vec3 &dv, float dt) {
+    glm::quat q(0.0, dv.x * dt, dv.y * dt, dv.z * dt);
+
+    q *= t;
+
+    t.x += q.x * 0.5;
+    t.y += q.y * 0.5;
+    t.z += q.z * 0.5;
+    t.w += q.w * 0.5;
+
+    t = glm::normalize(t);
 }
 
 EG_RAYTRACER_END

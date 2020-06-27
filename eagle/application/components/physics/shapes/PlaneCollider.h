@@ -14,6 +14,9 @@ class PlaneCollider : public ColliderShape {
 public:
     PlaneCollider(const glm::vec3& normal, float distance);
     virtual const std::type_index &type() const override;
+
+    virtual void compute_aabb(const Rigidbody::Transform &transform) override;
+
     virtual glm::vec3 compute_axis_inertia(Rigidbody& rigidbody)const override;
     inline float distance() const { return m_distance; }
     inline glm::vec3 normal() const { return m_normal; }

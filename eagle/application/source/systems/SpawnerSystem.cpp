@@ -47,17 +47,18 @@ void SpawnerSystem::update(entityx::EntityManager &entities, entityx::EventManag
 
             auto s = entities.create();
             auto tr = s.assign<Transform>();
-            tr->set_position(transform.position());
+//            tr->set_position(glm::vec3(0, 40, 0));
+            tr->set_position((transform.position()));
             tr->set_rotation(glm::radians(spawner.rotation));
 
             auto box = s.assign<Box>();
-            box->radius = glm::vec3(1.0f);
+            box->radius = spawner.radius;
             box->albedo = glm::vec3(0.1f);
             box->specular = glm::vec3(0.8f);
             tr->translate(transform.front() * box->radius.z * 2.0f);
             auto rigidbody = s.assign<Rigidbody>();
+            rigidbody->friction = 4.0f;
             rigidbody->velocity = transform.front() * 15.0f;
-            rigidbody->angularVelocity = glm::radians(glm::vec3(0, 0, 0));
             s.assign<Collider>(std::make_shared<BoxCollider>(box->radius));
         }
     });

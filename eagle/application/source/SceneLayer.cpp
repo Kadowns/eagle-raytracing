@@ -21,6 +21,7 @@
 #include <eagle/application/systems/SpawnerSystem.h>
 #include <eagle/application/components/Spawner.h>
 #include <eagle/application/SceneManager.h>
+#include <eagle/application/systems/PaintOnCollisionSystem.h>
 
 EG_RAYTRACER_BEGIN
 
@@ -31,6 +32,8 @@ SceneLayer::SceneLayer() {
 void SceneLayer::handle_attach() {
 
     Scene& scene = SceneManager::current_scene();
+
+    auto& sceneData = SingletonComponent::get<SceneData>();
 
     auto camera = scene.entities.create();
     camera.assign<Camera>();
@@ -43,8 +46,8 @@ void SceneLayer::handle_attach() {
     light.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(glm::vec3(-30, 0, 0))), glm::vec3(1))->hasChanged = true;
 
     auto plane = scene.entities.create();
-    plane.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(glm::vec3(0, 45, 0))), glm::vec3(1));
-    plane.assign<Rigidbody>(0.0f, 0.0f, 0.2f, Rigidbody::Mode::STATIC);
+    plane.assign<Transform>(glm::vec3(0), glm::quat(glm::radians(sceneData.cubeRotation)), glm::vec3(1));
+    plane.assign<Rigidbody>(0.0f, 0.0f, 0.2f, 0.65f, Rigidbody::Mode::STATIC);
     //plane.assign<Collider>(std::make_shared<PlaneCollider>(glm::vec3(0, 1, 0), 0));
     plane.assign<Collider>(std::make_shared<BoxCollider>(glm::vec3(25.0f, 25.0f, 25.0f)));
     plane.assign<Box>(glm::vec3(25.0f, 25.0f, 25.0f), glm::vec3(0.12f), glm::vec3(0.245f));
@@ -53,6 +56,7 @@ void SceneLayer::handle_attach() {
 
     scene.systems.add<CameraSystem>();
     scene.systems.add<SpawnerSystem>();
+    scene.systems.add<PaintOnCollisionSystem>();
     scene.systems.add<LightSystem>();
     scene.systems.add<PhysicsSystem>();
     scene.systems.add<CollisionSystem>();

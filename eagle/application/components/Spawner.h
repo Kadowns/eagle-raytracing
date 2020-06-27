@@ -11,6 +11,7 @@ EG_RAYTRACER_BEGIN
 
 struct Spawner {
     glm::vec3 rotation;
+    glm::vec3 radius = glm::vec3(1);
 };
 
 EG_RAYTRACER_END

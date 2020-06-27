@@ -22,4 +22,10 @@ glm::vec3 SphereCollider::compute_axis_inertia(Rigidbody& rigidbody) const {
     return glm::vec3(i);
 }
 
+void SphereCollider::compute_aabb(const Rigidbody::Transform &transform) {
+    glm::vec3 radius = glm::vec3(m_radius);
+    m_aabb.min = transform.position - radius;
+    m_aabb.max = transform.position + radius;
+}
+
 EG_RAYTRACER_END

@@ -11,7 +11,13 @@
 EG_RAYTRACER_BEGIN
 
 struct CollisionSettings {
-    std::list<Collision> collisions;
+
+    struct VelocityState {
+        glm::vec3 v, w;
+    };
+
+    std::vector<Collision> collisions;
+    std::unordered_map<entityx::Entity, VelocityState> velocities;
 };
 
 EG_RAYTRACER_END

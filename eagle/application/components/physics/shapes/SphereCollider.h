@@ -15,6 +15,9 @@ public:
     SphereCollider(float radius);
     virtual const std::type_index &type() const override;
     virtual glm::vec3 compute_axis_inertia(Rigidbody& rigidbody)const override;
+
+    virtual void compute_aabb(const Rigidbody::Transform &transform) override;
+
     inline float radius() const { return m_radius; }
 private:
     float m_radius;

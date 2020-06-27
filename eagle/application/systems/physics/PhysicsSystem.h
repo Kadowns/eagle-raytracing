@@ -20,6 +20,7 @@ public:
     void receive(const entityx::ComponentAddedEvent<Rigidbody>& ev);
 private:
     void update_physics(entityx::EntityManager &entities, entityx::EventManager &events, float dt);
+    static void integrate(glm::quat& t, const glm::vec3& dv, float dt);
 };
 
 EG_RAYTRACER_END

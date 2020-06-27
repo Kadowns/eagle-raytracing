@@ -19,6 +19,11 @@ glm::vec3 PlaneCollider::compute_axis_inertia(Rigidbody &rigidbody) const {
     return glm::vec3(0, 0, 0);
 }
 
+void PlaneCollider::compute_aabb(const Rigidbody::Transform &transform) {
+    m_aabb.max = glm::vec3(std::numeric_limits<float>::max());
+    m_aabb.min = glm::vec3(std::numeric_limits<float>::min());
+}
+
 EG_RAYTRACER_END
 
 

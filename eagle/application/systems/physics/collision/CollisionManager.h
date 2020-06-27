@@ -12,20 +12,21 @@ EG_RAYTRACER_BEGIN
 
 class CollisionManager {
 private:
-    typedef std::unordered_map<std::type_index, std::unordered_map<std::type_index, std::function<bool(Collision&)>>> CollisionFunctionTable;
+    typedef std::unordered_map<std::type_index, std::unordered_map<std::type_index, std::function<void(const Collision&)>>> CollisionFunctionTable;
 public:
     static void configure();
-    static bool test_collision(Collision &collision);
+    static void test_collision(const Collision &collision);
+    static bool test_aabb(const ColliderShape::AABB &a, const ColliderShape::AABB &b);
 private:
-    static bool sphere_vs_sphere(Collision& collision);
-    static bool sphere_vs_plane(Collision& collision);
-    static bool sphere_vs_box(Collision& collision);
-    static bool box_vs_plane(Collision& collision);
-    static bool box_vs_sphere(Collision& collision);
-    static bool box_vs_box(Collision& collision);
-    static bool plane_vs_sphere(Collision& collision);
-    static bool plane_vs_box(Collision& collision);
-    static bool plane_vs_plane(Collision& collision);
+    static void sphere_vs_sphere(const Collision &collision);
+    static void sphere_vs_plane(const Collision &collision);
+    static void sphere_vs_box(const Collision& collision);
+    static void box_vs_plane(const Collision& collision);
+    static void box_vs_sphere(const Collision& collision);
+    static void box_vs_box(const Collision& collision);
+    static void plane_vs_sphere(const Collision& collision);
+    static void plane_vs_box(const Collision& collision);
+    static void plane_vs_plane(const Collision& collision);
 
 
     //helper functions
