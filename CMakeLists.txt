@@ -101,7 +101,7 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanComputeShader.h
         eagle/core/renderer/vulkan/VulkanShaderUtils.h
         eagle/core/renderer/vulkan/VulkanStorageBuffer.h
-        )
+        eagle/core/renderer/Framebuffer.h eagle/core/renderer/vulkan/VulkanFramebuffer.h eagle/core/renderer/RenderPass.h)
 
 set(RENDERER_SOURCE
         eagle/core/source/renderer/DescriptorSet.cpp
@@ -126,7 +126,7 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanComputeShader.cpp
         eagle/core/source/renderer/vulkan/VulkanShaderUtils.cpp
         eagle/core/source/renderer/vulkan/VulkanStorageBuffer.cpp
-        )
+        eagle/core/source/renderer/vulkan/VulkanFramebuffer.cpp)
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})
 
@@ -153,108 +153,137 @@ define_file_basename_for_sources(eagle_core)
 
 target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent OGLCompiler HLSL SPIRV)
 
-#application-------------------------------------------------
-
-add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
+#engine-------------------------------------------------
 add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
 add_subdirectory(${EG_EXTERNAL_PATH}/stb ${CMAKE_BINARY_DIR}/stb)
 add_subdirectory(${EG_EXTERNAL_PATH}/entityx ${CMAKE_BINARY_DIR}/entityx)
 
-set(RAYTRACER_INCLUDE
-        eagle/application/EventMaster.h
-        eagle/application/RaytracerApplicationGlobalDefinitions.h
-        eagle/application/RaytracerApplication.h
-        eagle/application/renderer/RenderLayer.h
-        eagle/application/renderer/RenderMaster.h
-        eagle/application/renderer/TextureLoader.h
-        eagle/application/editor/EditorMaster.h
-        eagle/application/editor/EditorLayer.h
-        eagle/application/editor/EditorWindow.h
-        eagle/application/editor/ComputeDataEditor.h
-        eagle/application/components/Camera.h
-        eagle/application/components/CameraController.h
-        eagle/application/components/Transform.h
-        eagle/application/components/SceneData.h
-        eagle/application/components/RaytracerData.h
-        eagle/application/editor/EditorDockingWindow.h
-        eagle/application/editor/SceneWindow.h
-        eagle/application/components/DirectionalLight.h
-        eagle/application/systems/RaytracerSystem.h
-        eagle/application/systems/CameraSystem.h
-        eagle/application/systems/LightSystem.h
-        eagle/application/components/SingletonComponent.h
-        eagle/application/components/Sphere.h
-        eagle/application/SceneLayer.h
-        eagle/application/systems/physics/PhysicsSystem.h
-        eagle/application/components/physics/Rigidbody.h
-        eagle/application/components/Box.h
-        eagle/application/systems/physics/CollisionSystem.h
-        eagle/application/components/physics/PhysicsSettings.h
-        eagle/application/components/physics/Collider.h
-        eagle/application/components/physics/shapes/ColliderShape.h
-        eagle/application/components/physics/shapes/SphereCollider.h
-        eagle/application/systems/physics/collision/CollisionManager.h
-        eagle/application/systems/physics/collision/Collision.h
-        eagle/application/components/physics/shapes/PlaneCollider.h
-        eagle/application/components/physics/CollisionSettings.h
-        eagle/application/editor/DebugSettingsWindow.h
-        eagle/application/systems/SpawnerSystem.h
-        eagle/application/components/Spawner.h
-        eagle/application/SceneManager.h
-        eagle/application/systems/PaintOnCollisionSystem.h
+set(ENGINE_INCLUDE
+        eagle/engine/EventMaster.h
+        eagle/engine/EngineGlobalDefinitions.h
+        eagle/engine/Engine.h
+        eagle/engine/renderer/RenderLayer.h
+        eagle/engine/renderer/RenderMaster.h
+        eagle/engine/renderer/TextureLoader.h
+        eagle/engine/components/Camera.h
+        eagle/engine/components/CameraController.h
+        eagle/engine/components/Transform.h
+        eagle/engine/components/SceneData.h
+        eagle/engine/components/RaytracerData.h
+        eagle/engine/components/DirectionalLight.h
+        eagle/engine/systems/RaytracerSystem.h
+        eagle/engine/systems/CameraSystem.h
+        eagle/engine/systems/LightSystem.h
+        eagle/engine/components/SingletonComponent.h
+        eagle/engine/components/Sphere.h
+        eagle/engine/SceneLayer.h
+        eagle/engine/systems/physics/PhysicsSystem.h
+        eagle/engine/components/physics/Rigidbody.h
+        eagle/engine/components/Box.h
+        eagle/engine/systems/physics/CollisionSystem.h
+        eagle/engine/components/physics/PhysicsSettings.h
+        eagle/engine/components/physics/Collider.h
+        eagle/engine/components/physics/shapes/BoxCollider.h
+        eagle/engine/components/physics/shapes/ColliderShape.h
+        eagle/engine/components/physics/shapes/SphereCollider.h
+        eagle/engine/systems/physics/collision/CollisionManager.h
+        eagle/engine/systems/physics/collision/Collision.h
+        eagle/engine/components/physics/shapes/PlaneCollider.h
+        eagle/engine/components/physics/CollisionSettings.h
+        eagle/engine/systems/SpawnerSystem.h
+        eagle/engine/components/Spawner.h
+        eagle/engine/SceneManager.h
+        eagle/engine/systems/PaintOnCollisionSystem.h
         )
 
-set(RAYTRACER_SOURCE
-        eagle/application/source/renderer/RenderLayer.cpp
-        eagle/application/source/renderer/RenderMaster.cpp
-        eagle/application/source/renderer/TextureLoader.cpp
-        eagle/application/source/editor/EditorLayer.cpp
-        eagle/application/source/editor/EditorMaster.cpp
-        eagle/application/source/editor/EditorWindow.cpp
-        eagle/application/source/editor/ComputeDataEditor.cpp
-        eagle/application/source/editor/EditorDockingWindow.cpp
-        eagle/application/source/editor/SceneWindow.cpp
-        eagle/application/source/systems/RaytracerSystem.cpp
-        eagle/application/source/systems/CameraSystem.cpp
-        eagle/application/source/systems/LightSystem.cpp
-        eagle/application/source/SceneLayer.cpp
-        eagle/application/source/systems/physics/PhysicsSystem.cpp
-        eagle/application/source/systems/physics/collision/shapes/SphereCollider.cpp
-        eagle/application/source/systems/physics/collision/shapes/ColliderShape.cpp
-        eagle/application/components/physics/shapes/BoxCollider.h
-        eagle/application/source/systems/physics/collision/shapes/BoxCollider.cpp
-        eagle/application/source/systems/physics/collision/CollisionManager.cpp
-        eagle/application/source/systems/physics/collision/shapes/PlaneCollider.cpp
-        eagle/application/source/editor/DebugSettingsWindow.cpp
-        eagle/application/source/systems/physics/CollisionSystem.cpp
-        eagle/application/source/systems/SpawnerSystem.cpp
+set(ENGINE_SOURCE
+        eagle/engine/source/renderer/RenderLayer.cpp
+        eagle/engine/source/renderer/RenderMaster.cpp
+        eagle/engine/source/renderer/TextureLoader.cpp
+        eagle/engine/source/systems/RaytracerSystem.cpp
+        eagle/engine/source/systems/CameraSystem.cpp
+        eagle/engine/source/systems/LightSystem.cpp
+        eagle/engine/source/SceneLayer.cpp
+        eagle/engine/source/systems/physics/PhysicsSystem.cpp
+        eagle/engine/source/systems/physics/collision/shapes/SphereCollider.cpp
+        eagle/engine/source/systems/physics/collision/shapes/ColliderShape.cpp
+        eagle/engine/source/systems/physics/collision/shapes/BoxCollider.cpp
+        eagle/engine/source/systems/physics/collision/CollisionManager.cpp
+        eagle/engine/source/systems/physics/collision/shapes/PlaneCollider.cpp
+        eagle/engine/source/systems/physics/CollisionSystem.cpp
+        eagle/engine/source/systems/SpawnerSystem.cpp
         )
 
-set(RAYTRACER_ALL ${RAYTRACER_INCLUDE} ${RAYTRACER_SOURCE})
+set(ENGINE_ALL ${ENGINE_INCLUDE} ${ENGINE_SOURCE})
 
-add_library(eagle_raytracer STATIC "${RAYTRACER_ALL}")
+add_library(eagle_engine STATIC "${ENGINE_ALL}")
 
 target_include_directories(
-        eagle_raytracer
+        eagle_engine
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 set_target_properties(
-        eagle_raytracer
+        eagle_engine
         PROPERTIES
         LINKER_LANGUAGE CXX
 )
 
-define_file_basename_for_sources(eagle_raytracer)
+define_file_basename_for_sources(eagle_engine)
 
-target_link_libraries(eagle_raytracer eagle_core imgui glm stb entityx)
+target_link_libraries(eagle_engine eagle_core imgui glm stb entityx)
+#-----------------------------------------------------
+
+
+#editor-----------------------------------------------
+add_subdirectory(${EG_EXTERNAL_PATH}/imgui ${CMAKE_BINARY_DIR}/imgui)
+set(EDITOR_INCLUDE
+        eagle/editor/EditorMaster.h
+        eagle/editor/EditorLayer.h
+        eagle/editor/window/EditorWindow.h
+        eagle/editor/window/ComputeDataEditor.h
+        eagle/editor/window/EditorDockingWindow.h
+        eagle/editor/window/SceneWindow.h
+        eagle/editor/window/DebugSettingsWindow.h
+        eagle/editor/EditorGlobalDefinitions.h eagle/editor/Editor.h)
+
+set(EDITOR_SOURCE
+        eagle/editor/source/EditorLayer.cpp
+        eagle/editor/source/EditorMaster.cpp
+        eagle/editor/source/window/EditorWindow.cpp
+        eagle/editor/source/window/ComputeDataEditor.cpp
+        eagle/editor/source/window/EditorDockingWindow.cpp
+        eagle/editor/source/window/SceneWindow.cpp
+        eagle/editor/source/window/DebugSettingsWindow.cpp
+        )
+
+set(EDITOR_ALL ${EDITOR_INCLUDE} ${EDITOR_SOURCE})
+
+add_library(eagle_editor STATIC "${EDITOR_ALL}")
+
+target_include_directories(
+        eagle_editor
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+set_target_properties(
+        eagle_editor
+        PROPERTIES
+        LINKER_LANGUAGE CXX
+)
+
+define_file_basename_for_sources(eagle_editor)
+
+
+target_link_libraries(eagle_editor eagle_engine imgui)
 #-----------------------------------------------------
 
 add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h)
 
 define_file_basename_for_sources(eagle)
 
-
-target_link_libraries(eagle eagle_raytracer)
+target_link_libraries(eagle eagle_editor)
