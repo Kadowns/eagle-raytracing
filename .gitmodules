@@ -1,13 +1,18 @@
-[submodule "external/spdlog"]
-	path = external/spdlog
-	url = https://github.com/gabime/spdlog.git
-
-[submodule "external/glm"]
-	path = external/glm
-	url = https://github.com/g-truc/glm.git
 [submodule "external/entityx"]
 	path = external/entityx
 	url = https://github.com/alecthomas/entityx.git
-[submodule "external/json"]
-	path = external/json
-	url = https://github.com/nlohmann/json.git
+[submodule "external/glm"]
+	path = external/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "external/imgui"]
+	path = external/imgui
+	url = https://github.com/Kadowns/imgui.git
+[submodule "external/glfw"]
+	path = external/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "external/glslang"]
+	path = external/glslang
+	url = https://github.com/Kadowns/glslang.git

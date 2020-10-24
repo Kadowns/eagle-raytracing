@@ -151,11 +151,12 @@ include(cmake/Eagle.cmake)
 
 define_file_basename_for_sources(eagle_core)
 
-target_link_libraries(eagle_core GLFW spdlog Vulkan::Vulkan glslang OSDependent OGLCompiler HLSL SPIRV)
+target_link_libraries(eagle_core glfw spdlog Vulkan::Vulkan glslang OSDependent OGLCompiler HLSL SPIRV)
 
 #engine-------------------------------------------------
 add_subdirectory(${EG_EXTERNAL_PATH}/glm ${CMAKE_BINARY_DIR}/glm)
 add_subdirectory(${EG_EXTERNAL_PATH}/stb ${CMAKE_BINARY_DIR}/stb)
+set(ENTITYX_BUILD_SHARED OFF CACHE BOOL "Build entityx static libs" FORCE)
 add_subdirectory(${EG_EXTERNAL_PATH}/entityx ${CMAKE_BINARY_DIR}/entityx)
 
 set(ENGINE_INCLUDE

@@ -3,8 +3,7 @@
 //
 
 #include <eagle/engine/renderer/TextureLoader.h>
-#include <stb_image.h>
-#include <external/stb/stb_image.h>
+#include <stb/stb_image.h>
 
 EG_ENGINE_BEGIN
 

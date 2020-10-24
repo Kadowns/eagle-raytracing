@@ -6,7 +6,7 @@
 #define EAGLE_EDITORGLOBALDEFINITIONS_H
 
 #include <eagle/engine/Engine.h>
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 #define EG_EDITOR_BEGIN namespace Eagle::Editor {
 #define EG_EDITOR_END   }

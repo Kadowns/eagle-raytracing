@@ -237,8 +237,6 @@ VkFormat VulkanConversor::to_vk(Format format) {
         case Format::PVRTC1_4BPP_SRGB_BLOCK_IMG: result = VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG; break;
         case Format::PVRTC2_2BPP_SRGB_BLOCK_IMG: result = VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG; break;
         case Format::PVRTC2_4BPP_SRGB_BLOCK_IMG: result = VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG; break;
-        case Format::RANGE_SIZE: result = VK_FORMAT_RANGE_SIZE; break;
-        case Format::MAX_ENUM: result = VK_FORMAT_MAX_ENUM; break;
     }
     return result;
 }
@@ -475,8 +473,6 @@ Format VulkanConversor::to_eg(VkFormat format) {
         case VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG: result = Format::PVRTC1_4BPP_SRGB_BLOCK_IMG; break;
         case VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG: result = Format::PVRTC2_2BPP_SRGB_BLOCK_IMG; break;
         case VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG: result = Format::PVRTC2_4BPP_SRGB_BLOCK_IMG; break;
-        case VK_FORMAT_RANGE_SIZE: result = Format::RANGE_SIZE; break;
-        case VK_FORMAT_MAX_ENUM: result = Format::MAX_ENUM; break;
     }
     return result;
 }
