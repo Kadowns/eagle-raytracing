@@ -5,6 +5,7 @@
 #ifndef EAGLE_VULKANCONVERSOR_H
 #define EAGLE_VULKANCONVERSOR_H
 
+#include <eagle/core/renderer/RenderPass.h>
 #include "VulkanCore.h"
 
 EG_BEGIN
@@ -23,6 +24,12 @@ public:
     static PrimitiveTopology to_eg(VkPrimitiveTopology topology);
     static AttachmentLoadOperator to_eg(VkAttachmentLoadOp op);
     static VkAttachmentLoadOp to_vk(AttachmentLoadOperator op);
+    static AttachmentStoreOperator to_eg(VkAttachmentStoreOp op);
+    static VkAttachmentStoreOp to_vk(AttachmentStoreOperator op);
+    static VkImageLayout to_vk(ImageLayout op);
+    static ImageLayout to_eg(VkImageLayout op);
+    static VkAttachmentDescription to_vk(const RenderAttachmentDescription &egAttachment);
+    static RenderAttachmentDescription to_eg(const VkAttachmentDescription &egAttachment);
 };
 
 EG_END

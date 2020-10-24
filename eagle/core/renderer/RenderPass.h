@@ -11,8 +11,10 @@ EG_BEGIN
 
 struct RenderAttachmentDescription {
     Format format;
-    AttachmentOperator loadOp;
-    AttachmentOperator storeOp;
+    AttachmentLoadOperator loadOp;
+    AttachmentStoreOperator storeOp;
+    AttachmentLoadOperator stencilLoadOp = AttachmentLoadOperator::DONT_CARE;
+    AttachmentStoreOperator stencilStoreOp = AttachmentStoreOperator::DONT_CARE;
     ImageLayout initialLayout;
     ImageLayout finalLayout;
 };

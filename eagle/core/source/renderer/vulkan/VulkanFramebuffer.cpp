@@ -25,7 +25,7 @@ void VulkanFramebuffer::create_framebuffer() {
 
     VkFramebufferCreateInfo framebufferCreateInfo = {};
     framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferCreateInfo.renderPass = m_createInfo.renderPass;
+    framebufferCreateInfo.renderPass = m_createInfo.renderPass->native_render_pass();
     framebufferCreateInfo.attachmentCount = attachments.size();
     framebufferCreateInfo.pAttachments = attachments.data();
     framebufferCreateInfo.width = m_width;

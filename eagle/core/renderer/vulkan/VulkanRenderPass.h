@@ -21,7 +21,9 @@ public:
                      const std::vector<RenderAttachmentDescription>& colorAttachments,
                      const RenderAttachmentDescription& depthAttachment);
 
-    inline const std::vector<VkAttachmentDescription>& native_color_attachments() const { return m_vkColorAttachment; }
+    virtual ~VulkanRenderPass();
+
+    inline const std::vector<VkAttachmentDescription>& native_color_attachments() const { return m_vkColorAttachments; }
     inline const VkAttachmentDescription& native_depth_attachment() const { return m_vkDepthAttachment; }
     inline const VkRenderPass& native_render_pass() const { return m_vkRenderPass; }
 
@@ -30,7 +32,7 @@ private:
 
 private:
     VulkanRenderPassCreateInfo m_createInfo;
-    std::vector<VkAttachmentDescription> m_vkColorAttachment;
+    std::vector<VkAttachmentDescription> m_vkColorAttachments;
     VkAttachmentDescription m_vkDepthAttachment;
     VkRenderPass m_vkRenderPass;
 };

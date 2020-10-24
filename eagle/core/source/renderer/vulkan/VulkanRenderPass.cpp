@@ -10,31 +10,40 @@ EG_BEGIN
 VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
                                    const std::vector<RenderAttachmentDescription> &colorAttachments,
                                    const RenderAttachmentDescription &depthAttachment) :
-    m_createInfo(createInfo),
-    RenderPass(colorAttachments, depthAttachment) {
+    RenderPass(colorAttachments, depthAttachment),
+    m_createInfo(createInfo) {
+    EG_CORE_TRACE("Creating a VulkanRenderPass!");
 
-    m_vkDepthAttachment.finalLayout = VulkanConversor::to_vk
-
-
+    m_vkColorAttachments.reserve(colorAttachments.size());
+    for (auto& attachment : colorAttachments){
+        m_vkColorAttachments.emplace_back(VulkanConversor::to_vk(attachment));
+    }
+    m_vkDepthAttachment = VulkanConversor::to_vk(depthAttachment);
 
     create_native_render_pass();
+    EG_CORE_TRACE("VulkanRenderPass created!");
 }
 
 void VulkanRenderPass::create_native_render_pass() {
-    EG_CORE_TRACE("Creating render pass!");
+    EG_CORE_TRACE("Creating a native render pass!");
 
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    std::vector<VkAttachmentReference> colorAttachmentRefs;
+    colorAttachmentRefs.reserve(m_vkColorAttachments.size());
+    for (int i = 0; i < m_vkColorAttachments.size(); i++){
+        VkAttachmentReference colorAttachmentRef = {};
+        colorAttachmentRef.attachment = i;
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentRefs.emplace_back(colorAttachmentRef);
+    }
 
     VkAttachmentReference depthAttachmentRef = {};
-    depthAttachmentRef.attachment = 1;
+    depthAttachmentRef.attachment = colorAttachmentRefs.size();
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
+    subpass.colorAttachmentCount = colorAttachmentRefs.size();
+    subpass.pColorAttachments = colorAttachmentRefs.data();
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     std::array<VkSubpassDependency, 2> dependencies = {};
@@ -53,27 +62,10 @@ void VulkanRenderPass::create_native_render_pass() {
     dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = m_present.swapchainFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    VkAttachmentDescription depthAttachment = {};
-    depthAttachment.format = find_depth_format();
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    std::vector<VkAttachmentDescription> attachments(m_vkColorAttachments);
+    attachments.emplace_back(m_vkDepthAttachment);
 
-    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = attachments.size();
@@ -83,12 +75,17 @@ void VulkanRenderPass::create_native_render_pass() {
     renderPassInfo.dependencyCount = dependencies.size();
     renderPassInfo.pDependencies = dependencies.data();
 
-    VK_CALL_ASSERT(vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &m_present.renderPass)) {
+    VK_CALL_ASSERT(vkCreateRenderPass(m_createInfo.device, &renderPassInfo, nullptr, &m_vkRenderPass)) {
         throw std::runtime_error("failed to create render pass!");
     }
 
-    EG_CORE_TRACE("Render pass created!");
+    EG_CORE_TRACE("Native render pass created!");
 }
 
+VulkanRenderPass::~VulkanRenderPass() {
+    EG_CORE_TRACE("Destroying a VulkanRenderPass!");
+    VK_CALL vkDestroyRenderPass(m_createInfo.device, m_vkRenderPass, nullptr);
+    EG_CORE_TRACE("VulkanRenderPass destroyed!");
+}
 
 EG_END

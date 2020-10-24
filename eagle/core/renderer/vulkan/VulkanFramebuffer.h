@@ -8,12 +8,13 @@
 #include <eagle/core/renderer/vulkan/VulkanCore.h>
 #include <eagle/core/renderer/vulkan/VulkanImage.h>
 #include <eagle/core/renderer/Framebuffer.h>
+#include "VulkanRenderPass.h"
 
 EG_BEGIN
 
 struct VulkanFramebufferCreateInfo {
     VkDevice device;
-    VkRenderPass renderPass;
+    Reference<VulkanRenderPass> renderPass;
 };
 
 

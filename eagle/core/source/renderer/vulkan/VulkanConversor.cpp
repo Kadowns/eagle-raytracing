@@ -583,5 +583,116 @@ PrimitiveTopology VulkanConversor::to_eg(VkPrimitiveTopology topology) {
     return result;
 }
 
+AttachmentLoadOperator VulkanConversor::to_eg(VkAttachmentLoadOp op) {
+    AttachmentLoadOperator result;
+    switch(op){
+        case VK_ATTACHMENT_LOAD_OP_LOAD: result = AttachmentLoadOperator::LOAD; break;
+        case VK_ATTACHMENT_LOAD_OP_CLEAR: result = AttachmentLoadOperator::CLEAR; break;
+        case VK_ATTACHMENT_LOAD_OP_DONT_CARE: result = AttachmentLoadOperator::DONT_CARE; break;
+        default: throw std::runtime_error("Invalid VkAttachmentLoadOp on conversion");
+    }
+    return result;
+}
+
+VkAttachmentLoadOp VulkanConversor::to_vk(AttachmentLoadOperator op) {
+    VkAttachmentLoadOp result;
+    switch(op){
+        case AttachmentLoadOperator::LOAD: result = VK_ATTACHMENT_LOAD_OP_LOAD; break;
+        case AttachmentLoadOperator::CLEAR: result = VK_ATTACHMENT_LOAD_OP_CLEAR; break;
+        case AttachmentLoadOperator::DONT_CARE: result = VK_ATTACHMENT_LOAD_OP_DONT_CARE; break;
+    }
+    return result;
+}
+
+AttachmentStoreOperator VulkanConversor::to_eg(VkAttachmentStoreOp op) {
+    AttachmentStoreOperator result;
+    switch(op){
+        case VK_ATTACHMENT_STORE_OP_STORE: result = AttachmentStoreOperator::STORE; break;
+        case VK_ATTACHMENT_STORE_OP_DONT_CARE: result = AttachmentStoreOperator::DONT_CARE; break;
+        case VK_ATTACHMENT_STORE_OP_NONE_QCOM: result = AttachmentStoreOperator::NONE_QCOM; break;
+        default: throw std::runtime_error("Invalid VkAttachmentStoreOp on conversion");
+    }
+    return result;
+}
+
+VkAttachmentStoreOp VulkanConversor::to_vk(AttachmentStoreOperator op) {
+    VkAttachmentStoreOp result;
+    switch(op){
+        case AttachmentStoreOperator::STORE: result = VK_ATTACHMENT_STORE_OP_STORE; break;
+        case AttachmentStoreOperator::DONT_CARE: result = VK_ATTACHMENT_STORE_OP_DONT_CARE; break;
+        case AttachmentStoreOperator::NONE_QCOM: result = VK_ATTACHMENT_STORE_OP_NONE_QCOM; break;
+    }
+    return result;
+}
+
+ImageLayout VulkanConversor::to_eg(VkImageLayout op) {
+    ImageLayout result;
+    switch(op){
+        case VK_IMAGE_LAYOUT_UNDEFINED: result = ImageLayout::UNDEFINED; break;
+        case VK_IMAGE_LAYOUT_GENERAL: result = ImageLayout::GENERAL; break;
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: result = ImageLayout::COLOR_ATTACHMENT_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: result = ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL: result = ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: result = ImageLayout::SHADER_READ_ONLY_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: result = ImageLayout::TRANSFER_SRC_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: result = ImageLayout::TRANSFER_DST_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_PREINITIALIZED: result = ImageLayout::PREINITIALIZED; break;
+        case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL: result = ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: result = ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; break;
+        case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: result = ImageLayout::PRESENT_SRC_KHR; break;
+        case VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR: result = ImageLayout::SHARED_PRESENT_KHR; break;
+        case VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV: result = ImageLayout::SHADING_RATE_OPTIMAL_NV; break;
+        case VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT: result = ImageLayout::FRAGMENT_DENSITY_MAP_OPTIMAL_EXT; break;
+        default: throw std::runtime_error("Invalid VkImageLayout on conversion");
+    }
+    return result;
+}
+
+VkImageLayout VulkanConversor::to_vk(ImageLayout op) {
+    VkImageLayout result;
+    switch(op){
+        case ImageLayout::UNDEFINED: result = VK_IMAGE_LAYOUT_UNDEFINED; break;
+        case ImageLayout::GENERAL: result = VK_IMAGE_LAYOUT_GENERAL; break;
+        case ImageLayout::COLOR_ATTACHMENT_OPTIMAL: result = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
+        case ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL: result = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; break;
+        case ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL: result = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL; break;
+        case ImageLayout::SHADER_READ_ONLY_OPTIMAL: result = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
+        case ImageLayout::TRANSFER_SRC_OPTIMAL: result = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL; break;
+        case ImageLayout::TRANSFER_DST_OPTIMAL: result = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL; break;
+        case ImageLayout::PREINITIALIZED: result = VK_IMAGE_LAYOUT_PREINITIALIZED; break;
+        case ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL: result = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL; break;
+        case ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: result = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; break;
+        case ImageLayout::PRESENT_SRC_KHR: result = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; break;
+        case ImageLayout::SHARED_PRESENT_KHR: result = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR; break;
+        case ImageLayout::SHADING_RATE_OPTIMAL_NV: result = VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV; break;
+        case ImageLayout::FRAGMENT_DENSITY_MAP_OPTIMAL_EXT: result = VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT; break;
+    }
+    return result;
+}
+
+VkAttachmentDescription VulkanConversor::to_vk(const RenderAttachmentDescription &egAttachment) {
+    VkAttachmentDescription vkAttachment = {};
+    vkAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    vkAttachment.loadOp = VulkanConversor::to_vk(egAttachment.loadOp);
+    vkAttachment.storeOp = VulkanConversor::to_vk(egAttachment.storeOp);
+    vkAttachment.initialLayout = VulkanConversor::to_vk(egAttachment.initialLayout);
+    vkAttachment.finalLayout = VulkanConversor::to_vk(egAttachment.finalLayout);
+    vkAttachment.stencilLoadOp = VulkanConversor::to_vk(egAttachment.stencilLoadOp);
+    vkAttachment.stencilStoreOp = VulkanConversor::to_vk(egAttachment.stencilStoreOp);
+    vkAttachment.format = VulkanConversor::to_vk(egAttachment.format);
+    return vkAttachment;
+}
+
+RenderAttachmentDescription VulkanConversor::to_eg(const VkAttachmentDescription &vkAttachment) {
+    RenderAttachmentDescription egAttachment = {};
+    egAttachment.loadOp = VulkanConversor::to_eg(vkAttachment.loadOp);
+    egAttachment.storeOp = VulkanConversor::to_eg(vkAttachment.storeOp);
+    egAttachment.initialLayout = VulkanConversor::to_eg(vkAttachment.initialLayout);
+    egAttachment.finalLayout = VulkanConversor::to_eg(vkAttachment.finalLayout);
+    egAttachment.stencilLoadOp = VulkanConversor::to_eg(vkAttachment.stencilLoadOp);
+    egAttachment.stencilStoreOp = VulkanConversor::to_eg(vkAttachment.stencilStoreOp);
+    egAttachment.format = VulkanConversor::to_eg(vkAttachment.format);
+    return egAttachment;
+}
 
 EG_END
