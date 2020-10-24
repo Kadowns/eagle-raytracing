@@ -455,10 +455,16 @@ static uint32_t format_size(Format format){
     return result;
 }
 
-enum class AttachmentOperator {
+enum class AttachmentLoadOperator {
     LOAD = 0,
     CLEAR = 1,
     DONT_CARE = 2,
+};
+
+enum class AttachmentStoreOperator {
+    STORE = 0,
+    DONT_CARE = 1,
+    NONE_QCOM = 1000301000,
 };
 
 enum class ImageLayout {

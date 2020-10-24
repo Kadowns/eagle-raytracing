@@ -21,6 +21,8 @@ public:
     static Filter           to_eg(VkFilter filter);
     static VkPrimitiveTopology to_vk(PrimitiveTopology topology);
     static PrimitiveTopology to_eg(VkPrimitiveTopology topology);
+    static AttachmentLoadOperator to_eg(VkAttachmentLoadOp op);
+    static VkAttachmentLoadOp to_vk(AttachmentLoadOperator op);
 };
 
 EG_END

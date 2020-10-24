@@ -78,6 +78,8 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/CommandBuffer.h
         eagle/core/renderer/ComputeShader.h
         eagle/core/renderer/StorageBuffer.h
+        eagle/core/renderer/Framebuffer.h
+        eagle/core/renderer/RenderPass.h
         eagle/core/renderer/vulkan/VulkanContext.h
         eagle/core/renderer/vulkan/VulkanCore.h
         eagle/core/renderer/vulkan/VulkanHelper.h
@@ -101,7 +103,9 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanComputeShader.h
         eagle/core/renderer/vulkan/VulkanShaderUtils.h
         eagle/core/renderer/vulkan/VulkanStorageBuffer.h
-        eagle/core/renderer/Framebuffer.h eagle/core/renderer/vulkan/VulkanFramebuffer.h eagle/core/renderer/RenderPass.h)
+        eagle/core/renderer/vulkan/VulkanFramebuffer.h
+        eagle/core/renderer/vulkan/VulkanRenderPass.h
+        )
 
 set(RENDERER_SOURCE
         eagle/core/source/renderer/DescriptorSet.cpp
@@ -126,7 +130,9 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanComputeShader.cpp
         eagle/core/source/renderer/vulkan/VulkanShaderUtils.cpp
         eagle/core/source/renderer/vulkan/VulkanStorageBuffer.cpp
-        eagle/core/source/renderer/vulkan/VulkanFramebuffer.cpp)
+        eagle/core/source/renderer/vulkan/VulkanFramebuffer.cpp
+        eagle/core/source/renderer/vulkan/VulkanRenderPass.cpp
+        )
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})
 
