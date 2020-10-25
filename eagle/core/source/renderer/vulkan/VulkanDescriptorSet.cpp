@@ -89,7 +89,7 @@ void VulkanDescriptorSet::flush(uint32_t index) {
             case DescriptorType::UNIFORM_BUFFER:{
                 auto buffer = std::static_pointer_cast<VulkanUniformBuffer>(m_descriptorItems[j]);
                 VkDescriptorBufferInfo bufferInfo = {};
-                bufferInfo.buffer = buffer->get_buffers()[index]->get_native_buffer();
+                bufferInfo.buffer = buffer->get_buffers()[index]->native_buffer();
                 bufferInfo.offset = 0;
                 bufferInfo.range = buffer->size();
                 bufferInfos.push_back(bufferInfo);
@@ -98,7 +98,7 @@ void VulkanDescriptorSet::flush(uint32_t index) {
             case DescriptorType::STORAGE_BUFFER:{
                 auto buffer = std::static_pointer_cast<VulkanStorageBuffer>(m_descriptorItems[j]);
                 VkDescriptorBufferInfo bufferInfo = {};
-                bufferInfo.buffer = buffer->get_buffers()[index]->get_native_buffer();
+                bufferInfo.buffer = buffer->get_buffers()[index]->native_buffer();
                 bufferInfo.offset = 0;
                 bufferInfo.range = buffer->size();
                 bufferInfos.push_back(bufferInfo);

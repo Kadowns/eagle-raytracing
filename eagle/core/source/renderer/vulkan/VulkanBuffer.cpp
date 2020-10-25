@@ -65,13 +65,13 @@ VulkanBuffer::create_buffer(VkPhysicalDevice physicalDevice, VkDevice device, Re
     bufferInfo.usage = info.usageFlags;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if ((result = vkCreateBuffer(device, &bufferInfo, nullptr, &buffer->get_native_buffer())) != VK_SUCCESS) {
+    if ((result = vkCreateBuffer(device, &bufferInfo, nullptr, &buffer->native_buffer())) != VK_SUCCESS) {
         EG_CORE_ERROR("Failed to create vulkan buffer");
         return result;
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, buffer->get_native_buffer(), &memRequirements);
+    vkGetBufferMemoryRequirements(device, buffer->native_buffer(), &memRequirements);
 
     buffer->m_alignment = memRequirements.alignment;
     buffer->m_size = memRequirements.size;

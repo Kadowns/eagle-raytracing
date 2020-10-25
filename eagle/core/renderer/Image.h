@@ -5,9 +5,8 @@
 #ifndef EAGLE_IMAGE_H
 #define EAGLE_IMAGE_H
 
-#include "eagle/core/CoreGlobalDefinitions.h"
 #include "DescriptorItem.h"
-
+#include "RenderingCore.h"
 
 EG_BEGIN
 
@@ -16,8 +15,11 @@ struct ImageCreateInfo {
     uint32_t mipLevels, arrayLayers;
     Format format;
     ImageTiling tiling;
+    ImageLayout layout;
+    std::vector<unsigned char> bufferData;
     std::vector<ImageUsage> usages;
     std::vector<MemoryProperty> memoryProperties;
+    std::vector<ImageAspect> aspects;
 };
 
 class Image : public DescriptorItem {

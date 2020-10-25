@@ -92,12 +92,12 @@ void VulkanCommandBuffer::bind_compute_shader(const Reference<ComputeShader> &sh
 void VulkanCommandBuffer::bind_vertex_buffer(const Reference<VertexBuffer> &vertexBuffer) {
     Reference<VulkanVertexBuffer> vvb = std::static_pointer_cast<VulkanVertexBuffer>(vertexBuffer);
     VkDeviceSize offsets[] = {0};
-    VK_CALL vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, &vvb->get_buffer(m_imageIndexRef).get_native_buffer(), offsets);
+    VK_CALL vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, &vvb->get_buffer(m_imageIndexRef).native_buffer(), offsets);
 }
 
 void VulkanCommandBuffer::bind_index_buffer(const Reference<IndexBuffer> &indexBuffer) {
     Reference<VulkanIndexBuffer> vib = std::static_pointer_cast<VulkanIndexBuffer>(indexBuffer);
-    VK_CALL vkCmdBindIndexBuffer(m_commandBuffer, vib->get_buffer(m_imageIndexRef).get_native_buffer(), 0, vib->get_native_index_type());
+    VK_CALL vkCmdBindIndexBuffer(m_commandBuffer, vib->get_buffer(m_imageIndexRef).native_buffer(), 0, vib->get_native_index_type());
 }
 
 void VulkanCommandBuffer::bind_descriptor_sets(const Reference <DescriptorSet> &descriptorSet, uint32_t setIndex) {

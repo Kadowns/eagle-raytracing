@@ -130,7 +130,7 @@ VulkanTexture::copy_buffer_to_image(const Reference<VulkanBuffer>& buffer, VkIma
 
     vkCmdCopyBufferToImage(
             commandBuffer,
-            buffer->get_native_buffer(),
+            buffer->native_buffer(),
             image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1,

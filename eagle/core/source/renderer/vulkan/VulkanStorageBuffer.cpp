@@ -94,8 +94,8 @@ void VulkanStorageBuffer::create_storage_buffer() {
                         m_createInfo.device,
                         m_createInfo.commandPool,
                         m_createInfo.graphicsQueue,
-                        stagingBuffer->get_native_buffer(),
-                        m_buffers[i]->get_native_buffer(),
+                        stagingBuffer->native_buffer(),
+                        m_buffers[i]->native_buffer(),
                         m_bytes.size(),
                         0);
             }

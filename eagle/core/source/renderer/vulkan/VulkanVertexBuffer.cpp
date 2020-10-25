@@ -64,8 +64,8 @@ VulkanVertexBuffer::VulkanVertexBuffer(VkDevice device, VulkanVertexBufferCreate
                     device,
                     createInfo.commandPool,
                     createInfo.graphicsQueue,
-                    stagingBuffer->get_native_buffer(),
-                    m_buffers[0]->get_native_buffer(),
+                    stagingBuffer->native_buffer(),
+                    m_buffers[0]->native_buffer(),
                     bufferSize,
                     0);
 

@@ -695,22 +695,58 @@ RenderAttachmentDescription VulkanConversor::to_eg(const VkAttachmentDescription
     return egAttachment;
 }
 
-std::vector<VkAttachmentDescription>
-VulkanConversor::to_vk(const std::vector<RenderAttachmentDescription> &egAttachments) {
-    std::vector<VkAttachmentDescription> result;
-    result.reserve(egAttachments.size());
-    for (auto& attachment : egAttachments){
-        result.emplace_back(to_vk(attachment));
+VkImageTiling VulkanConversor::to_vk(ImageTiling tiling) {
+    VkImageTiling result;
+    switch(tiling){
+        case ImageTiling::OPTIMAL: result = VK_IMAGE_TILING_OPTIMAL; break;
+        case ImageTiling::LINEAR: result = VK_IMAGE_TILING_LINEAR; break;
+        case ImageTiling::DRM_FORMAT_MODIFIER_EXT: result = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT; break;
     }
     return result;
 }
 
-std::vector<RenderAttachmentDescription>
-VulkanConversor::to_eg(const std::vector<VkAttachmentDescription> &vkAttachments) {
-    std::vector<RenderAttachmentDescription> result;
-    result.reserve(vkAttachments.size());
-    for (auto& attachment : vkAttachments){
-        result.emplace_back(to_eg(attachment));
+ImageTiling VulkanConversor::to_eg(VkImageTiling tiling) {
+    ImageTiling result;
+    switch(tiling){
+        case VK_IMAGE_TILING_OPTIMAL: result = ImageTiling::OPTIMAL; break;
+        case VK_IMAGE_TILING_LINEAR: result = ImageTiling::LINEAR; break;
+        case VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT: result = ImageTiling::DRM_FORMAT_MODIFIER_EXT; break;
+        default: throw std::runtime_error("Invalid VkImageTiling on conversion");
+    }
+    return result;
+}
+
+VkImageUsageFlagBits VulkanConversor::to_vk(ImageUsage usage) {
+    VkImageUsageFlagBits result;
+    switch(usage){
+        case ImageUsage::TRANSFER_SRC_BIT: result = VK_IMAGE_USAGE_TRANSFER_SRC_BIT; break;
+        case ImageUsage::TRANSFER_DST_BIT: result = VK_IMAGE_USAGE_TRANSFER_DST_BIT; break;
+        case ImageUsage::SAMPLED_BIT: result = VK_IMAGE_USAGE_SAMPLED_BIT; break;
+        case ImageUsage::STORAGE_BIT: result = VK_IMAGE_USAGE_STORAGE_BIT; break;
+        case ImageUsage::COLOR_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; break;
+        case ImageUsage::DEPTH_STENCIL_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; break;
+        case ImageUsage::TRANSIENT_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT; break;
+        case ImageUsage::INPUT_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
+        case ImageUsage::SHADING_RATE_IMAGE_BIT_NV: result = VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV; break;
+        case ImageUsage::FRAGMENT_DENSITY_MAP_BIT_EXT: result = VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT; break;
+    }
+    return result;
+}
+
+ImageUsage VulkanConversor::to_eg(VkImageUsageFlagBits usage) {
+    ImageUsage result;
+    switch(usage){
+        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: result = ImageUsage::TRANSFER_SRC_BIT; break;
+        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: result = ImageUsage::TRANSFER_DST_BIT; break;
+        case VK_IMAGE_USAGE_SAMPLED_BIT: result = ImageUsage::SAMPLED_BIT; break;
+        case VK_IMAGE_USAGE_STORAGE_BIT: result = ImageUsage::STORAGE_BIT; break;
+        case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT: result = ImageUsage::COLOR_ATTACHMENT_BIT; break;
+        case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT: result = ImageUsage::DEPTH_STENCIL_ATTACHMENT_BIT; break;
+        case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT: result = ImageUsage::TRANSIENT_ATTACHMENT_BIT; break;
+        case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT: result = ImageUsage::INPUT_ATTACHMENT_BIT; break;
+        case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV: result = ImageUsage::SHADING_RATE_IMAGE_BIT_NV; break;
+        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT: result = ImageUsage::FRAGMENT_DENSITY_MAP_BIT_EXT; break;
+        default: throw std::runtime_error("Invalid VkImageUsageFlagBits on conversion");
     }
     return result;
 }
