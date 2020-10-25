@@ -18,8 +18,17 @@ struct VulkanRenderPassCreateInfo {
 class VulkanRenderPass : public RenderPass {
 public:
     VulkanRenderPass(const VulkanRenderPassCreateInfo& createInfo,
+                     const VkAttachmentDescription& colorAttachment,
+                     const VkAttachmentDescription& depthAttachment);
+
+
+    VulkanRenderPass(const VulkanRenderPassCreateInfo& createInfo,
                      const std::vector<RenderAttachmentDescription>& colorAttachments,
                      const RenderAttachmentDescription& depthAttachment);
+
+    VulkanRenderPass(const VulkanRenderPassCreateInfo& createInfo,
+                     const std::vector<VkAttachmentDescription>& colorAttachments,
+                     const VkAttachmentDescription& depthAttachment);
 
     virtual ~VulkanRenderPass();
 

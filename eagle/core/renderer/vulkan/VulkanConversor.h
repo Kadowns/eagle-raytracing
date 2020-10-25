@@ -29,7 +29,9 @@ public:
     static VkImageLayout to_vk(ImageLayout op);
     static ImageLayout to_eg(VkImageLayout op);
     static VkAttachmentDescription to_vk(const RenderAttachmentDescription &egAttachment);
-    static RenderAttachmentDescription to_eg(const VkAttachmentDescription &egAttachment);
+    static RenderAttachmentDescription to_eg(const VkAttachmentDescription &vkAttachment);
+    static std::vector<VkAttachmentDescription> to_vk(const std::vector<RenderAttachmentDescription>& egAttachments);
+    static std::vector<RenderAttachmentDescription> to_eg(const std::vector<VkAttachmentDescription>& vkAttachments);
 };
 
 EG_END

@@ -8,16 +8,28 @@
 EG_BEGIN
 
 VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
+                                   const VkAttachmentDescription &colorAttachment,
+                                   const VkAttachmentDescription &depthAttachment) :
+    VulkanRenderPass(createInfo, std::vector<VkAttachmentDescription>{colorAttachment}, depthAttachment){
+
+}
+
+
+VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
+                                   const std::vector<VkAttachmentDescription> &colorAttachments,
+                                   const VkAttachmentDescription &depthAttachment) :
+    VulkanRenderPass(createInfo, VulkanConversor::to_eg(colorAttachments), VulkanConversor::to_eg(depthAttachment)){
+
+}
+
+VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
                                    const std::vector<RenderAttachmentDescription> &colorAttachments,
                                    const RenderAttachmentDescription &depthAttachment) :
     RenderPass(colorAttachments, depthAttachment),
     m_createInfo(createInfo) {
     EG_CORE_TRACE("Creating a VulkanRenderPass!");
 
-    m_vkColorAttachments.reserve(colorAttachments.size());
-    for (auto& attachment : colorAttachments){
-        m_vkColorAttachments.emplace_back(VulkanConversor::to_vk(attachment));
-    }
+    m_vkColorAttachments = std::move(VulkanConversor::to_vk(colorAttachments));
     m_vkDepthAttachment = VulkanConversor::to_vk(depthAttachment);
 
     create_native_render_pass();

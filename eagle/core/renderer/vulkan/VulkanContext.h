@@ -26,6 +26,8 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanComputeShader.h"
 #include "VulkanStorageBuffer.h"
+#include "VulkanRenderPass.h"
+#include "VulkanFramebuffer.h"
 
 EG_BEGIN
 
@@ -113,6 +115,8 @@ protected:
 
     virtual void create_render_pass();
 
+    virtual void create_framebuffers();
+
     virtual void create_offscreen_render_pass();
 
     virtual void recreate_swapchain();
@@ -139,8 +143,6 @@ protected:
     VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& presentModes);
 
     VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities);
-    VkFormat find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-    VkFormat find_depth_format();
 
 public:
     //inherited via RenderingContext
@@ -205,8 +207,8 @@ protected:
         VkFormat swapchainFormat;
         VkExtent2D extent2D;
         VkSwapchainKHR swapchain;
-        VkRenderPass renderPass, offscreenPass;
-        std::vector<Reference<VulkanMainRenderTarget>> renderTargets;
+        Reference<VulkanRenderPass> renderPass;
+        std::vector<Reference<VulkanFramebuffer>> framebuffers;
     } m_present;
 
     VkCommandPool m_graphicsCommandPool, m_computeCommandPool;

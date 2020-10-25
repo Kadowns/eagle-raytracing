@@ -11,30 +11,37 @@
 
 EG_BEGIN
 
-//base interfaces for vulkan attachments and sampler
-struct ImageAttachment{};
-struct ImageSampler{};
-
+struct ImageCreateInfo {
+    uint32_t width, height;
+    uint32_t mipLevels, arrayLayers;
+    Format format;
+    ImageTiling tiling;
+    std::vector<ImageUsage> usages;
+    std::vector<MemoryProperty> memoryProperties;
+};
 
 class Image : public DescriptorItem {
 public:
 
-    Image(DescriptorType type, uint32_t width, uint32_t height) : DescriptorItem(type), m_width(width), m_height(height) {}
-    virtual ~Image() = default;
-    uint32_t get_width() const {return m_width;}
-    uint32_t get_height() const {return m_height;}
-    virtual Handle<ImageAttachment> get_attachment() = 0;
-    virtual Handle<ImageSampler> get_sampler() = 0;
+    Image(const ImageCreateInfo& createInfo) :
+        DescriptorItem(DescriptorType::SAMPLED_IMAGE),
+        m_createInfo(createInfo) {}
 
+    virtual ~Image() = default;
+
+    inline uint32_t width() const { return m_createInfo.width; }
+    inline uint32_t height() const { return m_createInfo.height; }
     inline void resize(uint32_t width, uint32_t height) {
-        m_width = width;
-        m_height = height;
+        m_createInfo.width = width;
+        m_createInfo.height = height;
+        on_resize();
     }
 
+protected:
+    virtual void on_resize() = 0;
 
 protected:
-    uint32_t m_width, m_height;
-
+    ImageCreateInfo m_createInfo;
 };
 
 EG_END

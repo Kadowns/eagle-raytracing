@@ -120,7 +120,7 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 imageInfo.imageView = std::static_pointer_cast<VulkanImageAttachment>(image->get_attachment().lock())->view;
                 imageInfo.sampler = std::static_pointer_cast<VulkanImageSampler>(image->get_sampler().lock())->sampler;
                 imageInfos.push_back(imageInfo);
-            }
+            } break;
         }
     }
 

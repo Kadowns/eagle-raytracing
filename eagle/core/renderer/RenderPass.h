@@ -7,6 +7,8 @@
 
 #include <eagle/core/renderer/RenderingCore.h>
 
+#include <utility>
+
 EG_BEGIN
 
 struct RenderAttachmentDescription {
@@ -22,8 +24,8 @@ struct RenderAttachmentDescription {
 class RenderPass {
 public:
 
-    RenderPass(const std::vector<RenderAttachmentDescription>& colorAttachments, const RenderAttachmentDescription& depthAttachment) :
-        m_colorAttachments(colorAttachments),
+    RenderPass(std::vector<RenderAttachmentDescription>  colorAttachments, const RenderAttachmentDescription& depthAttachment) :
+        m_colorAttachments(std::move(colorAttachments)),
         m_depthAttachment(depthAttachment) {}
     RenderPass(const RenderAttachmentDescription& colorAttachment, const RenderAttachmentDescription& depthAttachment) :
         RenderPass(std::vector<RenderAttachmentDescription>{colorAttachment}, depthAttachment) {}

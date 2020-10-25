@@ -132,6 +132,7 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanStorageBuffer.cpp
         eagle/core/source/renderer/vulkan/VulkanFramebuffer.cpp
         eagle/core/source/renderer/vulkan/VulkanRenderPass.cpp
+        eagle/core/source/renderer/vulkan/VulkanImage.cpp
         )
 
 set(RENDERER_ALL ${RENDERER_INCLUDE} ${RENDERER_SOURCE})

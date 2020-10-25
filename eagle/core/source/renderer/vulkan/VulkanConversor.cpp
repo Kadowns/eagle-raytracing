@@ -695,4 +695,24 @@ RenderAttachmentDescription VulkanConversor::to_eg(const VkAttachmentDescription
     return egAttachment;
 }
 
+std::vector<VkAttachmentDescription>
+VulkanConversor::to_vk(const std::vector<RenderAttachmentDescription> &egAttachments) {
+    std::vector<VkAttachmentDescription> result;
+    result.reserve(egAttachments.size());
+    for (auto& attachment : egAttachments){
+        result.emplace_back(to_vk(attachment));
+    }
+    return result;
+}
+
+std::vector<RenderAttachmentDescription>
+VulkanConversor::to_eg(const std::vector<VkAttachmentDescription> &vkAttachments) {
+    std::vector<RenderAttachmentDescription> result;
+    result.reserve(vkAttachments.size());
+    for (auto& attachment : vkAttachments){
+        result.emplace_back(to_eg(attachment));
+    }
+    return result;
+}
+
 EG_END

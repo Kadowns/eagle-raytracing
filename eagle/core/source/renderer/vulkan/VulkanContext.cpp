@@ -657,7 +657,7 @@ void VulkanContext::create_render_targets() {
     createInfo.device = m_device;
     createInfo.physicalDevice = m_physicalDevice;
     createInfo.colorFormat = m_present.swapchainFormat;
-    createInfo.depthFormat = find_depth_format();
+    createInfo.depthFormat = VulkanHelper::find_depth_format(m_physicalDevice);
 
     for (size_t i = 0; i < m_present.renderTargets.size(); i++) {
         m_present.renderTargets[i] = std::make_shared<VulkanMainRenderTarget>(
@@ -677,7 +677,7 @@ void VulkanContext::handle_window_resized(int width, int height) {
 }
 
 void VulkanContext::create_depth_resources() {
-    VkFormat depthFormat = find_depth_format();
+    VkFormat depthFormat = VulkanHelper::find_depth_format(m_physicalDevice);
 
     VulkanHelper::create_image(m_physicalDevice, m_device,
                                m_present.extent2D.width, m_present.extent2D.height, 1, 1,
@@ -708,61 +708,10 @@ void VulkanContext::create_depth_resources() {
                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRange, 0, 0);
 }
 
-VkFormat VulkanContext::find_supported_format(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
-                                              VkFormatFeatureFlags features) {
-    for (VkFormat format : candidates) {
-        VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &props);
-
-        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-            return format;
-        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-            return format;
-        }
-    }
-    throw std::runtime_error("failed to find supported format!");
-}
-
-VkFormat VulkanContext::find_depth_format() {
-    return find_supported_format({VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-                                 VK_IMAGE_TILING_OPTIMAL,
-                                 VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-}
-
 
 void VulkanContext::create_render_pass() {
 
-    EG_CORE_TRACE("Creating render pass!");
-
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthAttachmentRef = {};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-    std::array<VkSubpassDependency, 2> dependencies = {};
-    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[0].dstSubpass = 0;
-    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[0].srcAccessMask = 0;
-    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    dependencies[1].srcSubpass = 0;
-    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    EG_CORE_TRACE("Creating a present render pass!");
 
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = m_present.swapchainFormat;
@@ -775,7 +724,7 @@ void VulkanContext::create_render_pass() {
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentDescription depthAttachment = {};
-    depthAttachment.format = find_depth_format();
+    depthAttachment.format = VulkanHelper::find_depth_format(m_physicalDevice);
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -784,22 +733,21 @@ void VulkanContext::create_render_pass() {
     depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-    VkRenderPassCreateInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = attachments.size();
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = dependencies.size();
-    renderPassInfo.pDependencies = dependencies.data();
 
-    VK_CALL_ASSERT(vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &m_present.renderPass)) {
-        throw std::runtime_error("failed to create render pass!");
-    }
+    VulkanRenderPassCreateInfo createInfo = {};
+    createInfo.device = m_device;
 
-    EG_CORE_TRACE("Render pass created!");
+    m_present.renderPass = std::make_shared<VulkanRenderPass>(createInfo, colorAttachment, depthAttachment);
+
+    EG_CORE_TRACE("Present render pass created!");
 }
+
+void VulkanContext::create_framebuffers() {
+
+
+
+}
+
 
 void VulkanContext::create_command_pool() {
 
@@ -976,10 +924,8 @@ void VulkanContext::cleanup_swapchain() {
         renderTarget->cleanup();
     }
 
-    m_present.renderTargets.clear();
-
-    VK_CALL vkDestroyRenderPass(m_device, m_present.renderPass, nullptr);
-    VK_CALL vkDestroyRenderPass(m_device, m_present.offscreenPass, nullptr);
+    m_present.framebuffers.clear();
+    m_present.renderPass.reset();
 
     VK_CALL vkDestroySwapchainKHR(m_device, m_present.swapchain, nullptr);
     EG_CORE_TRACE("Swapchain cleared!");
@@ -1257,8 +1203,6 @@ void VulkanContext::destroy_render_target(const Reference<RenderTarget> &renderT
 void VulkanContext::set_recreation_callback(std::function<void()> recreation_callback) {
     this->recreation_callback = recreation_callback;
 }
-
-
 
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
