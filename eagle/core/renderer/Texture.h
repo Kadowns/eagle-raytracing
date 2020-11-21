@@ -14,22 +14,20 @@
 
 EG_BEGIN
 
-using Pixel = unsigned char;
-
 struct TextureCreateInfo {
-    Reference<Image> image;
+    ImageCreateInfo imageCreateInfo;
     Filter filter = Filter::LINEAR;
 };
 
-class Texture {
-
+class Texture : public DescriptorItem {
 public:
-    explicit Texture(TextureCreateInfo createInfo):
-            m_createInfo(std::move(createInfo)){}
-    virtual ~Texture();
+    explicit Texture(TextureCreateInfo createInfo) :
+        DescriptorItem(DescriptorType::TEXTURE),
+        m_createInfo(std::move(createInfo)) {}
+    virtual ~Texture() = default;
 
-
-    inline const Reference<Image>& image() const { return m_createInfo.image; }
+    virtual void resize(uint32_t width, uint32_t height) = 0;
+    virtual Reference<Image> image() const = 0;
 
 protected:
     TextureCreateInfo m_createInfo;

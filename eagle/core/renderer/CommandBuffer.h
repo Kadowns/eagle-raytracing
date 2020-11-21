@@ -13,6 +13,8 @@
 #include "UniformBuffer.h"
 #include "DescriptorSet.h"
 #include "RenderTarget.h"
+#include "RenderPass.h"
+#include "Framebuffer.h"
 
 EG_BEGIN
 
@@ -64,11 +66,12 @@ public:
     virtual void
     end_render_pass() = 0;
 
-    virtual void
-    begin_render_pass(const Reference<RenderTarget> &renderTarget) = 0;
 
     virtual void
-    pipeline_barrier(const Reference <ImageAttachment> &image, ShaderStage srcStage,
+    begin_render_pass(const Reference<RenderPass> &renderPass, const Reference<Framebuffer>& framebuffer) = 0;
+
+    virtual void
+    pipeline_barrier(const Reference <Image> &image, ShaderStage srcStage,
                      ShaderStage dstStage) = 0;
 
     virtual void

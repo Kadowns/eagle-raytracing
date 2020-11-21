@@ -5,12 +5,14 @@
 //
 
 #include <eagle/core/renderer/vulkan/VulkanCommandBuffer.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 #include <eagle/core/renderer/vulkan/VulkanShader.h>
 #include <eagle/core/renderer/vulkan/VulkanVertexBuffer.h>
 #include <eagle/core/renderer/vulkan/VulkanIndexBuffer.h>
 #include <eagle/core/renderer/vulkan/VulkanDescriptorSet.h>
 #include <eagle/core/renderer/vulkan/VulkanComputeShader.h>
+#include <eagle/core/renderer/vulkan/VulkanRenderPass.h>
+#include <eagle/core/renderer/vulkan/VulkanFramebuffer.h>
 
 EG_BEGIN
 
@@ -59,16 +61,18 @@ bool VulkanCommandBuffer::is_finished() {
     return m_finished;
 }
 
-void VulkanCommandBuffer::begin_render_pass(const Reference<RenderTarget> &renderTarget) {
-    auto vrt = std::static_pointer_cast<VulkanRenderTarget>(renderTarget);
+void VulkanCommandBuffer::begin_render_pass(const Reference<RenderPass> &renderPass,
+                                            const Reference<Framebuffer> &framebuffer) {
+    auto vrp = std::static_pointer_cast<VulkanRenderPass>(renderPass);
+    auto vf = std::static_pointer_cast<VulkanFramebuffer>(framebuffer);
 
     VkRenderPassBeginInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = vrt->get_render_pass();
-    renderPassInfo.framebuffer = vrt->get_framebuffer();
+    renderPassInfo.renderPass = vrp->native_render_pass();
+    renderPassInfo.framebuffer = vf->native_framebuffer();
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = vrt->get_extent();
-    auto clearValues = vrt->get_clear_values();
+    renderPassInfo.renderArea.extent = {vf->width(), vf->height()};
+    auto& clearValues = vrp->clear_values();
     renderPassInfo.clearValueCount = clearValues.size();
     renderPassInfo.pClearValues = clearValues.data();
 
@@ -114,7 +118,7 @@ void VulkanCommandBuffer::bind_descriptor_sets(const Reference<ComputeShader> &s
 }
 
 void VulkanCommandBuffer::push_constants(ShaderStage stage, uint32_t offset, size_t size, void *data) {
-    VK_CALL vkCmdPushConstants(m_commandBuffer, m_boundShader->get_layout(), VulkanConversor::to_vk(stage), offset, size, data);
+    VK_CALL vkCmdPushConstants(m_commandBuffer, m_boundShader->get_layout(), VulkanConverter::to_vk(stage), offset, size, data);
 }
 
 void VulkanCommandBuffer::draw(uint32_t vertexCount) {
@@ -143,21 +147,21 @@ void VulkanCommandBuffer::set_scissor(uint32_t w, uint32_t h, uint32_t x, uint32
     VK_CALL vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 }
 
-void VulkanCommandBuffer::pipeline_barrier(const Reference <ImageAttachment> &image, ShaderStage srcStage,
+void VulkanCommandBuffer::pipeline_barrier(const Reference<Image> &image, ShaderStage srcStage,
                                            ShaderStage dstStage) {
     VkImageMemoryBarrier imageMemoryBarrier = {};
     imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     // We won't be changing the layout of the image
     imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
     imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-    imageMemoryBarrier.image = std::static_pointer_cast<VulkanImageAttachment>(image)->image;
+    imageMemoryBarrier.image = std::static_pointer_cast<VulkanImage>(image)->native_image();
     imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
     imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
     imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     VK_CALL vkCmdPipelineBarrier(
             m_commandBuffer,
-            VulkanConversor::to_vk(srcStage),
-            VulkanConversor::to_vk(dstStage),
+            VulkanConverter::to_vk(srcStage),
+            VulkanConverter::to_vk(dstStage),
             0,
             0, nullptr,
             0, nullptr,

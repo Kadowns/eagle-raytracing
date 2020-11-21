@@ -13,8 +13,9 @@ EG_BEGIN
 enum class DescriptorType {
     UNIFORM_BUFFER = 0,
     STORAGE_BUFFER = 1,
-    SAMPLED_IMAGE = 2,
-    STORAGE_IMAGE = 3
+    TEXTURE = 2,
+    IMAGE = 3,
+    STORAGE_IMAGE = 4
 };
 
 enum class BufferUsage {
@@ -484,7 +485,6 @@ enum class ImageLayout {
     SHADING_RATE_OPTIMAL_NV = 1000164003,
     FRAGMENT_DENSITY_MAP_OPTIMAL_EXT = 1000218000
 };
-
 
 enum class ImageTiling {
     OPTIMAL = 0,

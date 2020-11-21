@@ -72,7 +72,7 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/DescriptorSet.h
         eagle/core/renderer/Texture.h
         eagle/core/renderer/Image.h
-        eagle/core/renderer/RenderTarget.h
+#        eagle/core/renderer/RenderTarget.h
         eagle/core/renderer/DescriptorItem.h
         eagle/core/renderer/DescriptorSetLayout.h
         eagle/core/renderer/CommandBuffer.h
@@ -92,13 +92,13 @@ set(RENDERER_INCLUDE
         eagle/core/renderer/vulkan/VulkanDescriptorSet.h
         eagle/core/renderer/vulkan/VulkanTexture.h
         eagle/core/renderer/vulkan/VulkanImage.h
-        eagle/core/renderer/vulkan/VulkanRenderTarget.h
+#        eagle/core/renderer/vulkan/VulkanRenderTarget.h
         eagle/core/renderer/vulkan/VulkanCommand.h
         eagle/core/renderer/vulkan/VulkanCommandList.h
         eagle/core/renderer/vulkan/spirv_reflect.h
         eagle/core/renderer/vulkan/VulkanDescriptorSetLayout.h
         eagle/core/renderer/vulkan/VulkanCommandBuffer.h
-        eagle/core/renderer/vulkan/VulkanConversor.h
+        eagle/core/renderer/vulkan/VulkanConverter.h
         eagle/core/renderer/vulkan/VulkanCleaner.h
         eagle/core/renderer/vulkan/VulkanComputeShader.h
         eagle/core/renderer/vulkan/VulkanShaderUtils.h
@@ -122,9 +122,9 @@ set(RENDERER_SOURCE
         eagle/core/source/renderer/vulkan/VulkanDescriptorSet.cpp
         eagle/core/source/renderer/vulkan/VulkanDescriptorSetLayout.cpp
         eagle/core/source/renderer/vulkan/VulkanTexture.cpp
-        eagle/core/source/renderer/vulkan/VulkanRenderTarget.cpp
+#        eagle/core/source/renderer/vulkan/VulkanRenderTarget.cpp
         eagle/core/source/renderer/vulkan/spirv_reflect.cpp
-        eagle/core/source/renderer/vulkan/VulkanConversor.cpp
+        eagle/core/source/renderer/vulkan/VulkanConverter.cpp
         eagle/core/source/renderer/vulkan/VulkanCommandBuffer.cpp
         eagle/core/source/renderer/vulkan/VulkanCleaner.cpp
         eagle/core/source/renderer/vulkan/VulkanComputeShader.cpp
@@ -290,7 +290,7 @@ define_file_basename_for_sources(eagle_editor)
 target_link_libraries(eagle_editor eagle_engine imgui)
 #-----------------------------------------------------
 
-add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h)
+add_executable(eagle eagle/EntryPoint.cpp eagle/Eagle.h eagle/test/TestLayer.h eagle/test/TestLayer.cpp)
 
 define_file_basename_for_sources(eagle)
 

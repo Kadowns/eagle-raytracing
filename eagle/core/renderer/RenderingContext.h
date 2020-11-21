@@ -18,6 +18,8 @@
 #include "CommandBuffer.h"
 #include "ComputeShader.h"
 #include "StorageBuffer.h"
+#include "Framebuffer.h"
+#include "RenderPass.h"
 
 EG_BEGIN
 
@@ -35,8 +37,10 @@ public:
     virtual void set_recreation_callback(std::function<void()> recreation_callback) = 0;
 
     virtual bool prepare_frame() = 0;
-    virtual Reference <Eagle::CommandBuffer> create_command_buffer() = 0;
-    virtual const Reference <RenderTarget> main_render_target() = 0;
+    virtual Reference<CommandBuffer> create_command_buffer() = 0;
+
+    virtual Reference<RenderPass> main_render_pass() = 0;
+    virtual Reference<Framebuffer> main_frambuffer() = 0;
 
     virtual void present_frame() = 0;
 
@@ -67,17 +71,14 @@ public:
     virtual Handle<Texture>
     create_texture(const TextureCreateInfo &createInfo) = 0;
 
-    virtual Handle<RenderTarget>
-    create_render_target(const std::vector<RenderTargetAttachment> &attachments) = 0;
+    virtual Handle<Image>
+    create_image(const ImageCreateInfo& createInfo) = 0;
 
     virtual Handle<ComputeShader>
     create_compute_shader(const std::string& path) = 0;
 
     virtual void
     destroy_texture_2d(const Reference<Texture>& texture) = 0;
-
-    virtual void
-    destroy_render_target(const Reference<RenderTarget>& renderTarget) = 0;
 
 };
 

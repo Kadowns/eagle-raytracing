@@ -2,11 +2,11 @@
 // Created by Novak on 31/08/2019.
 //
 
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 
 EG_BEGIN
 
-VkFormat VulkanConversor::to_vk(Format format) {
+VkFormat VulkanConverter::to_vk(Format format) {
 
     VkFormat result = VK_FORMAT_UNDEFINED;
     switch(format){
@@ -241,7 +241,7 @@ VkFormat VulkanConversor::to_vk(Format format) {
     return result;
 }
 
-Format VulkanConversor::to_eg(VkFormat format) {
+Format VulkanConverter::to_eg(VkFormat format) {
 
     Format result = Format::UNDEFINED;
 
@@ -477,7 +477,7 @@ Format VulkanConversor::to_eg(VkFormat format) {
     return result;
 }
 
-VkShaderStageFlags VulkanConversor::to_vk(ShaderStage stage) {
+VkShaderStageFlags VulkanConverter::to_vk(ShaderStage stage) {
     VkShaderStageFlags result;
     switch(stage){
         case ShaderStage::VERTEX: result = VK_SHADER_STAGE_VERTEX_BIT; break;
@@ -490,7 +490,7 @@ VkShaderStageFlags VulkanConversor::to_vk(ShaderStage stage) {
     return result;
 }
 
-ShaderStage VulkanConversor::to_eg(VkShaderStageFlags stage) {
+ShaderStage VulkanConverter::to_eg(VkShaderStageFlags stage) {
     ShaderStage result;
     switch(stage){
         case VK_SHADER_STAGE_VERTEX_BIT: result = ShaderStage::VERTEX; break;
@@ -504,21 +504,23 @@ ShaderStage VulkanConversor::to_eg(VkShaderStageFlags stage) {
     return result;
 }
 
-VkDescriptorType VulkanConversor::to_vk(DescriptorType type) {
+VkDescriptorType VulkanConverter::to_vk(DescriptorType type) {
     VkDescriptorType result;
     switch(type){
         case DescriptorType::UNIFORM_BUFFER: result = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; break;
-        case DescriptorType::SAMPLED_IMAGE: result = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; break;
+        case DescriptorType::TEXTURE: result = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; break;
         case DescriptorType::STORAGE_IMAGE: result = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; break;
         case DescriptorType::STORAGE_BUFFER: result = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; break;
+        case DescriptorType::IMAGE: result = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; break;
     }
     return result;
 }
 
-DescriptorType VulkanConversor::to_eg(VkDescriptorType type) {
+DescriptorType VulkanConverter::to_eg(VkDescriptorType type) {
     DescriptorType result;
     switch(type){
-        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: result = DescriptorType::SAMPLED_IMAGE; break;
+        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: result = DescriptorType::IMAGE; break;
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: result = DescriptorType::TEXTURE; break;
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: result = DescriptorType::UNIFORM_BUFFER; break;
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: result = DescriptorType::STORAGE_IMAGE; break;
         case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: result = DescriptorType::STORAGE_BUFFER; break;
@@ -527,7 +529,7 @@ DescriptorType VulkanConversor::to_eg(VkDescriptorType type) {
     return result;
 }
 
-VkFilter VulkanConversor::to_vk(Filter filter) {
+VkFilter VulkanConverter::to_vk(Filter filter) {
     VkFilter result;
     switch(filter){
         case Filter::LINEAR: result = VK_FILTER_LINEAR; break;
@@ -536,7 +538,7 @@ VkFilter VulkanConversor::to_vk(Filter filter) {
     return result;
 }
 
-Filter VulkanConversor::to_eg(VkFilter filter) {
+Filter VulkanConverter::to_eg(VkFilter filter) {
     Filter result;
     switch(filter){
         case VK_FILTER_LINEAR: result = Filter::LINEAR; break;
@@ -546,7 +548,7 @@ Filter VulkanConversor::to_eg(VkFilter filter) {
     return result;
 }
 
-VkPrimitiveTopology VulkanConversor::to_vk(PrimitiveTopology topology) {
+VkPrimitiveTopology VulkanConverter::to_vk(PrimitiveTopology topology) {
     VkPrimitiveTopology result;
     switch(topology){
         case PrimitiveTopology::POINT_LIST:result = VK_PRIMITIVE_TOPOLOGY_POINT_LIST; break;
@@ -564,7 +566,7 @@ VkPrimitiveTopology VulkanConversor::to_vk(PrimitiveTopology topology) {
     return result;
 }
 
-PrimitiveTopology VulkanConversor::to_eg(VkPrimitiveTopology topology) {
+PrimitiveTopology VulkanConverter::to_eg(VkPrimitiveTopology topology) {
     PrimitiveTopology result;
     switch(topology){
         case VK_PRIMITIVE_TOPOLOGY_POINT_LIST: result = PrimitiveTopology::POINT_LIST; break;
@@ -583,7 +585,7 @@ PrimitiveTopology VulkanConversor::to_eg(VkPrimitiveTopology topology) {
     return result;
 }
 
-AttachmentLoadOperator VulkanConversor::to_eg(VkAttachmentLoadOp op) {
+AttachmentLoadOperator VulkanConverter::to_eg(VkAttachmentLoadOp op) {
     AttachmentLoadOperator result;
     switch(op){
         case VK_ATTACHMENT_LOAD_OP_LOAD: result = AttachmentLoadOperator::LOAD; break;
@@ -594,7 +596,7 @@ AttachmentLoadOperator VulkanConversor::to_eg(VkAttachmentLoadOp op) {
     return result;
 }
 
-VkAttachmentLoadOp VulkanConversor::to_vk(AttachmentLoadOperator op) {
+VkAttachmentLoadOp VulkanConverter::to_vk(AttachmentLoadOperator op) {
     VkAttachmentLoadOp result;
     switch(op){
         case AttachmentLoadOperator::LOAD: result = VK_ATTACHMENT_LOAD_OP_LOAD; break;
@@ -604,7 +606,7 @@ VkAttachmentLoadOp VulkanConversor::to_vk(AttachmentLoadOperator op) {
     return result;
 }
 
-AttachmentStoreOperator VulkanConversor::to_eg(VkAttachmentStoreOp op) {
+AttachmentStoreOperator VulkanConverter::to_eg(VkAttachmentStoreOp op) {
     AttachmentStoreOperator result;
     switch(op){
         case VK_ATTACHMENT_STORE_OP_STORE: result = AttachmentStoreOperator::STORE; break;
@@ -615,7 +617,7 @@ AttachmentStoreOperator VulkanConversor::to_eg(VkAttachmentStoreOp op) {
     return result;
 }
 
-VkAttachmentStoreOp VulkanConversor::to_vk(AttachmentStoreOperator op) {
+VkAttachmentStoreOp VulkanConverter::to_vk(AttachmentStoreOperator op) {
     VkAttachmentStoreOp result;
     switch(op){
         case AttachmentStoreOperator::STORE: result = VK_ATTACHMENT_STORE_OP_STORE; break;
@@ -625,7 +627,7 @@ VkAttachmentStoreOp VulkanConversor::to_vk(AttachmentStoreOperator op) {
     return result;
 }
 
-ImageLayout VulkanConversor::to_eg(VkImageLayout op) {
+ImageLayout VulkanConverter::to_eg(VkImageLayout op) {
     ImageLayout result;
     switch(op){
         case VK_IMAGE_LAYOUT_UNDEFINED: result = ImageLayout::UNDEFINED; break;
@@ -648,7 +650,7 @@ ImageLayout VulkanConversor::to_eg(VkImageLayout op) {
     return result;
 }
 
-VkImageLayout VulkanConversor::to_vk(ImageLayout op) {
+VkImageLayout VulkanConverter::to_vk(ImageLayout op) {
     VkImageLayout result;
     switch(op){
         case ImageLayout::UNDEFINED: result = VK_IMAGE_LAYOUT_UNDEFINED; break;
@@ -670,32 +672,32 @@ VkImageLayout VulkanConversor::to_vk(ImageLayout op) {
     return result;
 }
 
-VkAttachmentDescription VulkanConversor::to_vk(const RenderAttachmentDescription &egAttachment) {
+VkAttachmentDescription VulkanConverter::to_vk(const RenderAttachmentDescription &egAttachment) {
     VkAttachmentDescription vkAttachment = {};
     vkAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    vkAttachment.loadOp = VulkanConversor::to_vk(egAttachment.loadOp);
-    vkAttachment.storeOp = VulkanConversor::to_vk(egAttachment.storeOp);
-    vkAttachment.initialLayout = VulkanConversor::to_vk(egAttachment.initialLayout);
-    vkAttachment.finalLayout = VulkanConversor::to_vk(egAttachment.finalLayout);
-    vkAttachment.stencilLoadOp = VulkanConversor::to_vk(egAttachment.stencilLoadOp);
-    vkAttachment.stencilStoreOp = VulkanConversor::to_vk(egAttachment.stencilStoreOp);
-    vkAttachment.format = VulkanConversor::to_vk(egAttachment.format);
+    vkAttachment.loadOp = VulkanConverter::to_vk(egAttachment.loadOp);
+    vkAttachment.storeOp = VulkanConverter::to_vk(egAttachment.storeOp);
+    vkAttachment.initialLayout = VulkanConverter::to_vk(egAttachment.initialLayout);
+    vkAttachment.finalLayout = VulkanConverter::to_vk(egAttachment.finalLayout);
+    vkAttachment.stencilLoadOp = VulkanConverter::to_vk(egAttachment.stencilLoadOp);
+    vkAttachment.stencilStoreOp = VulkanConverter::to_vk(egAttachment.stencilStoreOp);
+    vkAttachment.format = VulkanConverter::to_vk(egAttachment.format);
     return vkAttachment;
 }
 
-RenderAttachmentDescription VulkanConversor::to_eg(const VkAttachmentDescription &vkAttachment) {
+RenderAttachmentDescription VulkanConverter::to_eg(const VkAttachmentDescription &vkAttachment) {
     RenderAttachmentDescription egAttachment = {};
-    egAttachment.loadOp = VulkanConversor::to_eg(vkAttachment.loadOp);
-    egAttachment.storeOp = VulkanConversor::to_eg(vkAttachment.storeOp);
-    egAttachment.initialLayout = VulkanConversor::to_eg(vkAttachment.initialLayout);
-    egAttachment.finalLayout = VulkanConversor::to_eg(vkAttachment.finalLayout);
-    egAttachment.stencilLoadOp = VulkanConversor::to_eg(vkAttachment.stencilLoadOp);
-    egAttachment.stencilStoreOp = VulkanConversor::to_eg(vkAttachment.stencilStoreOp);
-    egAttachment.format = VulkanConversor::to_eg(vkAttachment.format);
+    egAttachment.loadOp = VulkanConverter::to_eg(vkAttachment.loadOp);
+    egAttachment.storeOp = VulkanConverter::to_eg(vkAttachment.storeOp);
+    egAttachment.initialLayout = VulkanConverter::to_eg(vkAttachment.initialLayout);
+    egAttachment.finalLayout = VulkanConverter::to_eg(vkAttachment.finalLayout);
+    egAttachment.stencilLoadOp = VulkanConverter::to_eg(vkAttachment.stencilLoadOp);
+    egAttachment.stencilStoreOp = VulkanConverter::to_eg(vkAttachment.stencilStoreOp);
+    egAttachment.format = VulkanConverter::to_eg(vkAttachment.format);
     return egAttachment;
 }
 
-VkImageTiling VulkanConversor::to_vk(ImageTiling tiling) {
+VkImageTiling VulkanConverter::to_vk(ImageTiling tiling) {
     VkImageTiling result;
     switch(tiling){
         case ImageTiling::OPTIMAL: result = VK_IMAGE_TILING_OPTIMAL; break;
@@ -705,7 +707,7 @@ VkImageTiling VulkanConversor::to_vk(ImageTiling tiling) {
     return result;
 }
 
-ImageTiling VulkanConversor::to_eg(VkImageTiling tiling) {
+ImageTiling VulkanConverter::to_eg(VkImageTiling tiling) {
     ImageTiling result;
     switch(tiling){
         case VK_IMAGE_TILING_OPTIMAL: result = ImageTiling::OPTIMAL; break;
@@ -716,37 +718,105 @@ ImageTiling VulkanConversor::to_eg(VkImageTiling tiling) {
     return result;
 }
 
-VkImageUsageFlagBits VulkanConversor::to_vk(ImageUsage usage) {
+VkImageUsageFlagBits VulkanConverter::to_vk(ImageUsage usage) {
     VkImageUsageFlagBits result;
     switch(usage){
-        case ImageUsage::TRANSFER_SRC_BIT: result = VK_IMAGE_USAGE_TRANSFER_SRC_BIT; break;
-        case ImageUsage::TRANSFER_DST_BIT: result = VK_IMAGE_USAGE_TRANSFER_DST_BIT; break;
-        case ImageUsage::SAMPLED_BIT: result = VK_IMAGE_USAGE_SAMPLED_BIT; break;
-        case ImageUsage::STORAGE_BIT: result = VK_IMAGE_USAGE_STORAGE_BIT; break;
-        case ImageUsage::COLOR_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; break;
-        case ImageUsage::DEPTH_STENCIL_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; break;
-        case ImageUsage::TRANSIENT_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT; break;
-        case ImageUsage::INPUT_ATTACHMENT_BIT: result = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
-        case ImageUsage::SHADING_RATE_IMAGE_BIT_NV: result = VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV; break;
-        case ImageUsage::FRAGMENT_DENSITY_MAP_BIT_EXT: result = VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT; break;
+        case ImageUsage::TRANSFER_SRC: result = VK_IMAGE_USAGE_TRANSFER_SRC_BIT; break;
+        case ImageUsage::TRANSFER_DST: result = VK_IMAGE_USAGE_TRANSFER_DST_BIT; break;
+        case ImageUsage::SAMPLED: result = VK_IMAGE_USAGE_SAMPLED_BIT; break;
+        case ImageUsage::STORAGE: result = VK_IMAGE_USAGE_STORAGE_BIT; break;
+        case ImageUsage::COLOR_ATTACHMENT: result = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; break;
+        case ImageUsage::DEPTH_STENCIL_ATTACHMENT: result = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; break;
+        case ImageUsage::TRANSIENT_ATTACHMENT: result = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT; break;
+        case ImageUsage::INPUT_ATTACHMENT: result = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
+        case ImageUsage::SHADING_RATE_IMAGE_NV: result = VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV; break;
+        case ImageUsage::FRAGMENT_DENSITY_MAP_EXT: result = VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT; break;
     }
     return result;
 }
 
-ImageUsage VulkanConversor::to_eg(VkImageUsageFlagBits usage) {
+ImageUsage VulkanConverter::to_eg(VkImageUsageFlagBits usage) {
     ImageUsage result;
     switch(usage){
-        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: result = ImageUsage::TRANSFER_SRC_BIT; break;
-        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: result = ImageUsage::TRANSFER_DST_BIT; break;
-        case VK_IMAGE_USAGE_SAMPLED_BIT: result = ImageUsage::SAMPLED_BIT; break;
-        case VK_IMAGE_USAGE_STORAGE_BIT: result = ImageUsage::STORAGE_BIT; break;
-        case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT: result = ImageUsage::COLOR_ATTACHMENT_BIT; break;
-        case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT: result = ImageUsage::DEPTH_STENCIL_ATTACHMENT_BIT; break;
-        case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT: result = ImageUsage::TRANSIENT_ATTACHMENT_BIT; break;
-        case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT: result = ImageUsage::INPUT_ATTACHMENT_BIT; break;
-        case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV: result = ImageUsage::SHADING_RATE_IMAGE_BIT_NV; break;
-        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT: result = ImageUsage::FRAGMENT_DENSITY_MAP_BIT_EXT; break;
+        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: result = ImageUsage::TRANSFER_SRC; break;
+        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: result = ImageUsage::TRANSFER_DST; break;
+        case VK_IMAGE_USAGE_SAMPLED_BIT: result = ImageUsage::SAMPLED; break;
+        case VK_IMAGE_USAGE_STORAGE_BIT: result = ImageUsage::STORAGE; break;
+        case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT: result = ImageUsage::COLOR_ATTACHMENT; break;
+        case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT: result = ImageUsage::DEPTH_STENCIL_ATTACHMENT; break;
+        case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT: result = ImageUsage::TRANSIENT_ATTACHMENT; break;
+        case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT: result = ImageUsage::INPUT_ATTACHMENT; break;
+        case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV: result = ImageUsage::SHADING_RATE_IMAGE_NV; break;
+        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT: result = ImageUsage::FRAGMENT_DENSITY_MAP_EXT; break;
         default: throw std::runtime_error("Invalid VkImageUsageFlagBits on conversion");
+    }
+    return result;
+}
+
+ImageAspect VulkanConverter::to_eg(VkImageAspectFlagBits usage) {
+    ImageAspect result;
+    switch(usage){
+        case VK_IMAGE_ASPECT_COLOR_BIT: result = ImageAspect::COLOR; break;
+        case VK_IMAGE_ASPECT_DEPTH_BIT: result = ImageAspect::DEPTH; break;
+        case VK_IMAGE_ASPECT_STENCIL_BIT: result = ImageAspect::STENCIL; break;
+        case VK_IMAGE_ASPECT_METADATA_BIT: result = ImageAspect::METADATA; break;
+        case VK_IMAGE_ASPECT_PLANE_0_BIT: result = ImageAspect::PLANE_0; break;
+        case VK_IMAGE_ASPECT_PLANE_1_BIT: result = ImageAspect::PLANE_1; break;
+        case VK_IMAGE_ASPECT_PLANE_2_BIT: result = ImageAspect::PLANE_2; break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT: result = ImageAspect::MEMORY_PLANE_0_EXT; break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_1_BIT_EXT: result = ImageAspect::MEMORY_PLANE_1_EXT; break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_2_BIT_EXT: result = ImageAspect::MEMORY_PLANE_2_EXT; break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_3_BIT_EXT: result = ImageAspect::MEMORY_PLANE_3_EXT; break;
+        default: throw std::runtime_error("Invalid VkImageAspectFlagBits on conversion");
+    }
+    return result;
+}
+
+VkImageAspectFlagBits VulkanConverter::to_vk(ImageAspect usage) {
+    VkImageAspectFlagBits result;
+    switch(usage){
+        case ImageAspect::COLOR: result = VK_IMAGE_ASPECT_COLOR_BIT; break;
+        case ImageAspect::DEPTH: result = VK_IMAGE_ASPECT_DEPTH_BIT; break;
+        case ImageAspect::STENCIL: result = VK_IMAGE_ASPECT_STENCIL_BIT; break;
+        case ImageAspect::METADATA: result = VK_IMAGE_ASPECT_METADATA_BIT; break;
+        case ImageAspect::PLANE_0: result = VK_IMAGE_ASPECT_PLANE_0_BIT; break;
+        case ImageAspect::PLANE_1: result = VK_IMAGE_ASPECT_PLANE_1_BIT; break;
+        case ImageAspect::PLANE_2: result = VK_IMAGE_ASPECT_PLANE_2_BIT; break;
+        case ImageAspect::MEMORY_PLANE_0_EXT: result = VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT; break;
+        case ImageAspect::MEMORY_PLANE_1_EXT: result = VK_IMAGE_ASPECT_MEMORY_PLANE_1_BIT_EXT; break;
+        case ImageAspect::MEMORY_PLANE_2_EXT: result = VK_IMAGE_ASPECT_MEMORY_PLANE_2_BIT_EXT; break;
+        case ImageAspect::MEMORY_PLANE_3_EXT: result = VK_IMAGE_ASPECT_MEMORY_PLANE_3_BIT_EXT; break;
+    }
+    return result;
+}
+
+MemoryProperty VulkanConverter::to_eg(VkMemoryPropertyFlagBits usage) {
+    MemoryProperty result;
+    switch(usage){
+        case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT: result = MemoryProperty::DEVICE_LOCAL; break;
+        case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT: result = MemoryProperty::HOST_VISIBLE; break;
+        case VK_MEMORY_PROPERTY_HOST_COHERENT_BIT: result = MemoryProperty::HOST_COHERENT; break;
+        case VK_MEMORY_PROPERTY_HOST_CACHED_BIT: result = MemoryProperty::HOST_CACHED; break;
+        case VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT: result = MemoryProperty::LAZILY_ALLOCATED; break;
+        case VK_MEMORY_PROPERTY_PROTECTED_BIT: result = MemoryProperty::PROTECTED; break;
+        case VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD: result = MemoryProperty::DEVICE_COHERENT_AMD; break;
+        case VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD: result = MemoryProperty::DEVICE_UNCACHED_AMD; break;
+        default: throw std::runtime_error("Invalid VkMemoryPropertyFlagBits on conversion");
+    }
+    return result;
+}
+
+VkMemoryPropertyFlagBits VulkanConverter::to_vk(MemoryProperty usage) {
+    VkMemoryPropertyFlagBits result;
+    switch(usage){
+        case MemoryProperty::DEVICE_LOCAL: result = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT; break;
+        case MemoryProperty::HOST_VISIBLE: result = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT; break;
+        case MemoryProperty::HOST_COHERENT: result = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT; break;
+        case MemoryProperty::HOST_CACHED: result = VK_MEMORY_PROPERTY_HOST_CACHED_BIT; break;
+        case MemoryProperty::LAZILY_ALLOCATED: result = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT; break;
+        case MemoryProperty::PROTECTED: result = VK_MEMORY_PROPERTY_PROTECTED_BIT; break;
+        case MemoryProperty::DEVICE_COHERENT_AMD: result = VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD; break;
+        case MemoryProperty::DEVICE_UNCACHED_AMD: result = VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD; break;
     }
     return result;
 }

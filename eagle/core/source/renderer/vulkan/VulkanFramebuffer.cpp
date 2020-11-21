@@ -6,33 +6,45 @@
 
 EG_BEGIN
 
-VulkanFramebuffer::VulkanFramebuffer(const VulkanFramebufferCreateInfo &createInfo,
-                                     uint32_t width, uint32_t height,
-                                     const std::vector<Reference<VulkanImageAttachment>> &imageAttachments) :
-                                     m_createInfo(createInfo),
-                                     m_width(width), m_height(height),
-                                     m_imageAttachments(imageAttachments) {
+VulkanFramebuffer::VulkanFramebuffer(const FramebufferCreateInfo &createInfo,
+                                     const VulkanFramebufferCreateInfo &nativeFramebufferCreateInfo) :
+    Framebuffer(createInfo),
+    m_nativeCreateInfo(nativeFramebufferCreateInfo) {
+    EG_CORE_TRACE("Constructing a vulkan frame buffer!");
+    m_nativeImageAttachments.reserve(createInfo.attachments.size());
+    for (auto& attachment : createInfo.attachments){
+        m_nativeImageAttachments.emplace_back(std::static_pointer_cast<VulkanImage>(attachment));
+    }
     create_framebuffer();
+    EG_CORE_TRACE("Vulkan frame buffer constructed!");
 }
 
-void VulkanFramebuffer::create_framebuffer() {
+VulkanFramebuffer::~VulkanFramebuffer() {
+    EG_CORE_TRACE("Destroying a vulkan frame buffer!");
+    VK_CALL vkDestroyFramebuffer(m_nativeCreateInfo.device, m_framebuffer, nullptr);
+    EG_CORE_TRACE("Vulkan frame buffer destroyed!");
+}
 
+
+void VulkanFramebuffer::create_framebuffer() {
+    EG_CORE_TRACE("Creating a vulkan frame buffer!");
     std::vector<VkImageView> attachments;
-    attachments.reserve(m_imageAttachments.size());
-    for (auto& image : m_imageAttachments){
-        attachments.emplace_back(image->view);
+    attachments.reserve(m_nativeImageAttachments.size());
+    for (auto& image : m_nativeImageAttachments){
+        attachments.emplace_back(image->native_image_view());
     }
 
     VkFramebufferCreateInfo framebufferCreateInfo = {};
     framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferCreateInfo.renderPass = m_createInfo.renderPass->native_render_pass();
+    framebufferCreateInfo.renderPass = m_nativeCreateInfo.renderPass->native_render_pass();
     framebufferCreateInfo.attachmentCount = attachments.size();
     framebufferCreateInfo.pAttachments = attachments.data();
-    framebufferCreateInfo.width = m_width;
-    framebufferCreateInfo.height = m_height;
+    framebufferCreateInfo.width = m_createInfo.width;
+    framebufferCreateInfo.height = m_createInfo.height;
     framebufferCreateInfo.layers = 1;
 
-    VK_CALL vkCreateFramebuffer(m_createInfo.device, &framebufferCreateInfo, nullptr, &m_framebuffer);
+    VK_CALL vkCreateFramebuffer(m_nativeCreateInfo.device, &framebufferCreateInfo, nullptr, &m_framebuffer);
+    EG_CORE_TRACE("Vulkan frame buffer created!");
 }
 
 EG_END

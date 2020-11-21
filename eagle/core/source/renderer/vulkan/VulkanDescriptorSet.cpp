@@ -1,4 +1,5 @@
 #include <eagle/core/renderer/vulkan/VulkanStorageBuffer.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 #include "eagle/core/renderer/vulkan/VulkanDescriptorSet.h"
 #include "eagle/core/renderer/vulkan/VulkanImage.h"
 
@@ -104,23 +105,29 @@ void VulkanDescriptorSet::flush(uint32_t index) {
                 bufferInfos.push_back(bufferInfo);
                 break;
             }
-            case DescriptorType::SAMPLED_IMAGE:{
-                auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
+            case DescriptorType::TEXTURE:{
+                auto texture = std::static_pointer_cast<VulkanTexture>(m_descriptorItems[j]);
                 VkDescriptorImageInfo imageInfo = {};
-                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = std::static_pointer_cast<VulkanImageAttachment>(image->get_attachment().lock())->view;
-                imageInfo.sampler = std::static_pointer_cast<VulkanImageSampler>(image->get_sampler().lock())->sampler;
+                imageInfo.imageLayout = VulkanConverter::to_vk(texture->image()->layout());
+                imageInfo.imageView = texture->native_image()->native_image_view();
+                imageInfo.sampler = texture->sampler();
                 imageInfos.push_back(imageInfo);
                 break;
             }
+            case DescriptorType::IMAGE:{
+                auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
+                VkDescriptorImageInfo imageInfo = {};
+                imageInfo.imageLayout = VulkanConverter::to_vk(image->layout());
+                imageInfo.imageView = image->native_image_view();
+                imageInfos.push_back(imageInfo);
+            }break;
             case DescriptorType::STORAGE_IMAGE:{
                 auto image = std::static_pointer_cast<VulkanImage>(m_descriptorItems[j]);
                 VkDescriptorImageInfo imageInfo = {};
-                imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-                imageInfo.imageView = std::static_pointer_cast<VulkanImageAttachment>(image->get_attachment().lock())->view;
-                imageInfo.sampler = std::static_pointer_cast<VulkanImageSampler>(image->get_sampler().lock())->sampler;
+                imageInfo.imageLayout = VulkanConverter::to_vk(image->layout());
+                imageInfo.imageView = image->native_image_view();
                 imageInfos.push_back(imageInfo);
-            } break;
+            }break;
         }
     }
 
@@ -137,12 +144,15 @@ void VulkanDescriptorSet::flush(uint32_t index) {
         descriptorWrite[j].descriptorType = descriptorBindings[j].descriptorType;
         descriptorWrite[j].descriptorCount = 1;
         if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
-            descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER){
+            descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+            ){
             descriptorWrite[j].pBufferInfo = &bufferInfos[bufferIndex];
             bufferIndex++;
         }
         else if (descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ||
-                 descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
+                 descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE ||
+                 descriptorWrite[j].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+                 ){
             descriptorWrite[j].pImageInfo = &imageInfos[imageIndex];
             imageIndex++;
         }

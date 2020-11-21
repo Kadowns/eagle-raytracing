@@ -1,9 +1,10 @@
 #include <eagle/core/renderer/vulkan/VulkanShader.h>
 #include <eagle/core/renderer/vulkan/VulkanShaderCompiler.h>
 #include <eagle/core/renderer/vulkan/VulkanHelper.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 #include <eagle/core/renderer/vulkan/VulkanShaderUtils.h>
 #include <eagle/core/Log.h>
+#include <eagle/core/renderer/vulkan/VulkanRenderPass.h>
 
 EG_BEGIN
 
@@ -22,7 +23,7 @@ VulkanShader::VulkanShader(const std::unordered_map<ShaderStage, std::string> &s
             throw std::runtime_error("Compute shaders are not allowed on a graphics shader!");
         }
 
-        m_shaderCodes.emplace(VulkanConversor::to_vk(stage), VulkanShaderCompiler::compile_glsl(path, stage));
+        m_shaderCodes.emplace(VulkanConverter::to_vk(stage), VulkanShaderCompiler::compile_glsl(path, stage));
     }
 
     create_pipeline_layout();
@@ -44,7 +45,7 @@ void VulkanShader::create_pipeline_layout() {
     m_inputAttributes.resize(m_vertexLayout.get_component_count());
     uint32_t offset = 0;
     for (uint32_t i = 0; i < m_inputAttributes.size(); i++){
-        m_inputAttributes[i].format = VulkanConversor::to_vk(m_vertexLayout[i]);
+        m_inputAttributes[i].format = VulkanConverter::to_vk(m_vertexLayout[i]);
         m_inputAttributes[i].binding = 0;
         m_inputAttributes[i].location = i;
         m_inputAttributes[i].offset = offset;
@@ -136,7 +137,7 @@ void VulkanShader::create_pipeline() {
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VulkanConversor::to_vk(m_pipelineInfo.primitiveTopology);
+    inputAssembly.topology = VulkanConverter::to_vk(m_pipelineInfo.primitiveTopology);
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 
@@ -257,7 +258,7 @@ void VulkanShader::create_pipeline() {
         pipelineInfo.pDynamicState = &dynamicState;
     }
     pipelineInfo.layout = m_pipelineLayout;
-    pipelineInfo.renderPass = *m_info.pRenderPass;
+    pipelineInfo.renderPass = std::static_pointer_cast<VulkanRenderPass>(m_pipelineInfo.renderPass)->native_render_pass();
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 

@@ -3,7 +3,7 @@
 //
 
 #include <eagle/core/renderer/vulkan/VulkanRenderPass.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 
 EG_BEGIN
 
@@ -18,7 +18,7 @@ VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
 VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
                                    const std::vector<VkAttachmentDescription> &colorAttachments,
                                    const VkAttachmentDescription &depthAttachment) :
-    VulkanRenderPass(createInfo, VulkanConversor::to_eg_vector<RenderAttachmentDescription>(colorAttachments), VulkanConversor::to_eg(depthAttachment)){
+    VulkanRenderPass(createInfo, VulkanConverter::to_eg_vector<RenderAttachmentDescription>(colorAttachments), VulkanConverter::to_eg(depthAttachment)){
 
 }
 
@@ -29,8 +29,16 @@ VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassCreateInfo &createInfo,
     m_createInfo(createInfo) {
     EG_CORE_TRACE("Creating a VulkanRenderPass!");
 
-    m_vkColorAttachments = std::move(VulkanConversor::to_vk_vector<VkAttachmentDescription>(colorAttachments));
-    m_vkDepthAttachment = VulkanConversor::to_vk(depthAttachment);
+    m_vkColorAttachments = std::move(VulkanConverter::to_vk_vector<VkAttachmentDescription>(colorAttachments));
+    m_vkDepthAttachment = VulkanConverter::to_vk(depthAttachment);
+
+    m_clearValues.resize(m_vkColorAttachments.size());
+    std::for_each(m_clearValues.begin(), m_clearValues.end(), [](VkClearValue& value){
+        value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+    });
+    VkClearValue depthClearValues = {};
+    depthClearValues.depthStencil = {1.0f, 0};
+    m_clearValues.emplace_back(depthClearValues);
 
     create_native_render_pass();
     EG_CORE_TRACE("VulkanRenderPass created!");
@@ -96,8 +104,14 @@ void VulkanRenderPass::create_native_render_pass() {
 
 VulkanRenderPass::~VulkanRenderPass() {
     EG_CORE_TRACE("Destroying a VulkanRenderPass!");
-    VK_CALL vkDestroyRenderPass(m_createInfo.device, m_vkRenderPass, nullptr);
+    cleanup();
     EG_CORE_TRACE("VulkanRenderPass destroyed!");
+}
+
+void VulkanRenderPass::cleanup() {
+    EG_CORE_TRACE("Cleaning up a VulkanRenderPass!");
+    VK_CALL vkDestroyRenderPass(m_createInfo.device, m_vkRenderPass, nullptr);
+    EG_CORE_TRACE("VulkanRenderPass cleaned!");
 }
 
 EG_END

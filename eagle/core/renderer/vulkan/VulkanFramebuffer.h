@@ -20,14 +20,16 @@ struct VulkanFramebufferCreateInfo {
 
 class VulkanFramebuffer : public Framebuffer {
 public:
-    VulkanFramebuffer(const VulkanFramebufferCreateInfo& createInfo, uint32_t width, uint32_t height, const std::vector<Reference<VulkanImageAttachment>>& imageAttachments);
-    inline std::vector<Reference<VulkanImageAttachment>>& get_image_attachments() { return m_imageAttachments; }
+    VulkanFramebuffer(const FramebufferCreateInfo& createInfo,
+                      const VulkanFramebufferCreateInfo& nativeFramebufferCreateInfo);
+    virtual ~VulkanFramebuffer();
+
+    inline const VkFramebuffer& native_framebuffer() const { return m_framebuffer; }
 private:
     void create_framebuffer();
 private:
-    VulkanFramebufferCreateInfo m_createInfo;
-    uint32_t m_width, m_height;
-    std::vector<Reference<VulkanImageAttachment>> m_imageAttachments;
+    VulkanFramebufferCreateInfo m_nativeCreateInfo;
+    std::vector<Reference<VulkanImage>> m_nativeImageAttachments;
     VkFramebuffer m_framebuffer;
 };
 

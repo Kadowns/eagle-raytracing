@@ -32,9 +32,12 @@ public:
 
     virtual ~VulkanRenderPass();
 
+    void cleanup();
+
     inline const std::vector<VkAttachmentDescription>& native_color_attachments() const { return m_vkColorAttachments; }
     inline const VkAttachmentDescription& native_depth_attachment() const { return m_vkDepthAttachment; }
     inline const VkRenderPass& native_render_pass() const { return m_vkRenderPass; }
+    inline const std::vector<VkClearValue>& clear_values() const { return m_clearValues; }
 
 private:
     void create_native_render_pass();
@@ -43,6 +46,7 @@ private:
     VulkanRenderPassCreateInfo m_createInfo;
     std::vector<VkAttachmentDescription> m_vkColorAttachments;
     VkAttachmentDescription m_vkDepthAttachment;
+    std::vector<VkClearValue> m_clearValues;
     VkRenderPass m_vkRenderPass;
 };
 

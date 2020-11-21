@@ -23,7 +23,7 @@ public:
     virtual void begin() override;
     virtual void finish() override;
     virtual bool is_finished() override;
-    virtual void begin_render_pass(const Reference<RenderTarget> &renderTarget) override;
+    virtual void begin_render_pass(const Reference<RenderPass> &renderPass, const Reference<Framebuffer>& framebuffer) override;
     virtual void end_render_pass() override;
     virtual void bind_shader(const Reference<Shader> &shader) override;
     virtual void bind_vertex_buffer(const Reference<VertexBuffer> &vertexBuffer) override;
@@ -34,7 +34,7 @@ public:
     virtual void draw_indexed(uint32_t indicesCount, uint32_t indexOffset, uint32_t vertexOffset) override;
     virtual void set_viewport(float w, float h, float x, float y, float minDepth, float maxDepth) override;
     virtual void set_scissor(uint32_t w, uint32_t h, uint32_t x, uint32_t y) override;
-    virtual void pipeline_barrier(const Reference <ImageAttachment> &image, ShaderStage srcStage, ShaderStage dstStage) override;
+    virtual void pipeline_barrier(const Reference <Image> &image, ShaderStage srcStage, ShaderStage dstStage) override;
     virtual void dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
     virtual void submit() override;
 

@@ -3,18 +3,44 @@
 //
 
 #include <eagle/core/renderer/vulkan/VulkanImage.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 #include <eagle/core/renderer/vulkan/VulkanHelper.h>
 #include <eagle/core/renderer/vulkan/VulkanBuffer.h>
 
 EG_BEGIN
 
 VulkanImage::VulkanImage(const ImageCreateInfo &imageCreateInfo, const VulkanImageCreateInfo &nativeCreateInfo) :
-        Image(imageCreateInfo),
-        m_nativeCreateInfo(nativeCreateInfo) {
+    Image(imageCreateInfo),
+    m_nativeCreateInfo(nativeCreateInfo) {
     EG_CORE_TRACE("Creating a vulkan image!");
     create();
     EG_CORE_TRACE("Vulkan image created!");
+}
+
+VulkanImage::VulkanImage(const ImageCreateInfo &imageCreateInfo, const VulkanImageCreateInfo& nativeCreateInfo, VkImage image) :
+    Image(imageCreateInfo),
+    m_nativeCreateInfo(nativeCreateInfo),
+    m_image(image),
+    m_createdFromExternalImage(true){
+    EG_CORE_TRACE("Creating a vulkan image from a swapchain image!");
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.layerCount = 1;
+    subresourceRange.baseArrayLayer = 0;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.aspectMask = VulkanConverter::to_vk_flags<VkImageAspectFlags>(m_createInfo.aspects);
+
+    VK_CALL VulkanHelper::create_image_view(
+            m_nativeCreateInfo.device,
+            m_image,
+            m_view,
+            VulkanConverter::to_vk(m_createInfo.format),
+            VK_IMAGE_VIEW_TYPE_2D,
+            subresourceRange
+    );
+
+    EG_CORE_TRACE("Vulkan image created from a swapchain image!");
 }
 
 VulkanImage::~VulkanImage() {
@@ -40,10 +66,10 @@ void VulkanImage::create() {
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = m_createInfo.mipLevels;
     imageInfo.arrayLayers = m_createInfo.arrayLayers;
-    imageInfo.format = VulkanConversor::to_vk(m_createInfo.format);
-    imageInfo.tiling = VulkanConversor::to_vk(m_createInfo.tiling);
+    imageInfo.format = VulkanConverter::to_vk(m_createInfo.format);
+    imageInfo.tiling = VulkanConverter::to_vk(m_createInfo.tiling);
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VulkanConversor::to_vk_flags<VkImageUsageFlags>(m_createInfo.usages);
+    imageInfo.usage = VulkanConverter::to_vk_flags<VkImageUsageFlags>(m_createInfo.usages);
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.flags = 0;
@@ -61,7 +87,7 @@ void VulkanImage::create() {
     allocInfo.memoryTypeIndex = VulkanHelper::find_memory_type(
             m_nativeCreateInfo.physicalDevice,
             memRequirements.memoryTypeBits,
-            VulkanConversor::to_vk_flags<VkMemoryPropertyFlags>(m_createInfo.memoryProperties)
+            VulkanConverter::to_vk_flags<VkMemoryPropertyFlags>(m_createInfo.memoryProperties)
     );
 
     VK_CALL_ASSERT(vkAllocateMemory(m_nativeCreateInfo.device, &allocInfo, nullptr, &m_memory)) {
@@ -76,7 +102,7 @@ void VulkanImage::create() {
     subresourceRange.baseArrayLayer = 0;
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
-    subresourceRange.aspectMask = VulkanConversor::to_vk_flags<VkImageAspectFlags>(m_createInfo.aspects);
+    subresourceRange.aspectMask = VulkanConverter::to_vk_flags<VkImageAspectFlags>(m_createInfo.aspects);
 
     if (!m_createInfo.bufferData.empty()) {
         copy_buffer_data_to_image(subresourceRange);
@@ -88,7 +114,7 @@ void VulkanImage::create() {
                 m_nativeCreateInfo.graphicsQueue,
                 m_image,
                 VK_IMAGE_LAYOUT_UNDEFINED,
-                VulkanConversor::to_vk(m_createInfo.layout),
+                VulkanConverter::to_vk(m_createInfo.layout),
                 subresourceRange
         );
     }
@@ -97,7 +123,7 @@ void VulkanImage::create() {
             m_nativeCreateInfo.device,
             m_image,
             m_view,
-            VulkanConversor::to_vk(m_createInfo.format),
+            VulkanConverter::to_vk(m_createInfo.format),
             VK_IMAGE_VIEW_TYPE_2D,
             subresourceRange
     );
@@ -149,8 +175,8 @@ void VulkanImage::copy_buffer_data_to_image(VkImageSubresourceRange subresourceR
 
     region.imageOffset = {0, 0, 0};
     region.imageExtent = {
-            m_createInfo.width,
-            m_createInfo.height,
+            (uint32_t)m_createInfo.width,
+            (uint32_t)m_createInfo.height,
             1
     };
 
@@ -176,7 +202,7 @@ void VulkanImage::copy_buffer_data_to_image(VkImageSubresourceRange subresourceR
             m_nativeCreateInfo.graphicsQueue,
             m_image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VulkanConversor::to_vk(m_createInfo.layout),
+            VulkanConverter::to_vk(m_createInfo.layout),
             subresourceRange,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
@@ -188,11 +214,23 @@ void VulkanImage::copy_buffer_data_to_image(VkImageSubresourceRange subresourceR
 
 void VulkanImage::clear() {
     EG_CORE_TRACE("Clearing a vulkan image!");
-    VK_CALL vkDestroyImageView(m_nativeCreateInfo.device, m_view, nullptr);
-    VK_CALL vkFreeMemory(m_nativeCreateInfo.device, m_memory, nullptr);
-    VK_CALL vkDestroyImage(m_nativeCreateInfo.device, m_image, nullptr);
+    if (m_view){
+        VK_CALL vkDestroyImageView(m_nativeCreateInfo.device, m_view, nullptr);
+    }
+    if (!m_createdFromExternalImage) {
+        if (m_memory) {
+            VK_CALL
+            vkFreeMemory(m_nativeCreateInfo.device, m_memory, nullptr);
+        }
+        if (m_image) {
+            VK_CALL
+            vkDestroyImage(m_nativeCreateInfo.device, m_image, nullptr);
+        }
+    }
+    m_view = nullptr;
+    m_memory = nullptr;
+    m_image = nullptr;
     EG_CORE_TRACE("Vulkan image cleared!");
 }
-
 
 EG_END

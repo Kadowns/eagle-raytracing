@@ -2,15 +2,15 @@
 // Created by Novak on 31/08/2019.
 //
 
-#ifndef EAGLE_VULKANCONVERSOR_H
-#define EAGLE_VULKANCONVERSOR_H
+#ifndef EAGLE_VULKANCONVERTER_H
+#define EAGLE_VULKANCONVERTER_H
 
 #include <eagle/core/renderer/RenderPass.h>
 #include "VulkanCore.h"
 
 EG_BEGIN
 
-class VulkanConversor {
+class VulkanConverter {
 public:
     static VkFormat to_vk(Format format);
     static Format to_eg(VkFormat format);
@@ -34,7 +34,10 @@ public:
     static ImageTiling to_eg(VkImageTiling tiling);
     static ImageUsage to_eg(VkImageUsageFlagBits usage);
     static VkImageUsageFlagBits to_vk(ImageUsage usage);
-
+    static ImageAspect to_eg(VkImageAspectFlagBits usage);
+    static VkImageAspectFlagBits to_vk(ImageAspect usage);
+    static MemoryProperty to_eg(VkMemoryPropertyFlagBits usage);
+    static VkMemoryPropertyFlagBits to_vk(MemoryProperty usage);
 
     template<typename EG, typename VK>
     static std::vector<EG> eg_vector_from_vk_flags(VK flags){
@@ -54,7 +57,7 @@ public:
 
     template<typename VK, typename EG>
     static VK to_vk_flags(const std::vector<EG>& elements) {
-        VK flags;
+        VK flags = 0;
         for (auto &element : elements) {
             flags |= to_vk(element);
         }
@@ -63,7 +66,7 @@ public:
 
     template<typename EG, typename VK>
     static std::vector<EG> to_eg_vector(const std::vector<VK>& elements){
-        std::vector<VK> result;
+        std::vector<EG> result;
         result.reserve(elements.size());
         for (auto& element : elements){
             result.emplace_back(to_eg(element));
@@ -85,4 +88,4 @@ public:
 
 EG_END
 
-#endif //EAGLE_VULKANCONVERSOR_H
+#endif //EAGLE_VULKANCONVERTER_H

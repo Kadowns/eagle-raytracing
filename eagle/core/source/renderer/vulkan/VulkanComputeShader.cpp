@@ -5,7 +5,7 @@
 #include <eagle/core/renderer/vulkan/VulkanComputeShader.h>
 #include <eagle/core/renderer/vulkan/VulkanShaderCompiler.h>
 #include <eagle/core/renderer/vulkan/VulkanShaderUtils.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 
 EG_BEGIN
 

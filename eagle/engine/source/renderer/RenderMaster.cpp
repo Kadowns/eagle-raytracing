@@ -44,7 +44,7 @@ void RenderMaster::update() {
 
     handle_command_buffer_begin(commandBuffer);
 
-    commandBuffer->begin_render_pass(s_context->main_render_target());
+    commandBuffer->begin_render_pass(s_context->main_render_pass(), s_context->main_frambuffer());
 
     handle_command_buffer_main_render_pass(commandBuffer);
 

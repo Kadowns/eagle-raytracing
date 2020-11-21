@@ -8,30 +8,36 @@
 EG_ENGINE_BEGIN
 
 TextureCreateInfo TextureLoader::load_pixels(const std::string &path) {
-    //assert(stbi_is_hdr(path.c_str()));
-    //stbi_hdr_to_ldr_gamma(2.2f);
-    TextureCreateInfo createInfo = {};
-    if (stbi_is_hdr(path.c_str())){
-        Pixel* pixels = (Pixel*)stbi_load(path.c_str(), &createInfo.width, &createInfo.height, &createInfo.bpp, STBI_rgb_alpha);
-        if (!pixels){
-            throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-        }
 
-        int len = createInfo.width * createInfo.height * 4;
-        createInfo.pixels.resize(len);
-        memcpy(createInfo.pixels.data(), pixels, len);
-        stbi_image_free(pixels);
+    ImageCreateInfo imageCreateInfo = {};
+    int width, height, bpp;
+    auto *pixels = (unsigned char *) stbi_load(path.c_str(), &width, &height, &bpp, STBI_rgb_alpha);
+    if (!pixels) {
+        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
     }
 
-    if (createInfo.bpp == 4){
-        createInfo.format = Format::R8G8B8A8_UNORM;
-    }
-    else if (createInfo.bpp == 3){
-        createInfo.format = Format::R8G8B8A8_UNORM;
-    }
-    createInfo.mipLevels = 1;
-    createInfo.layerCount = 1;
-    return createInfo;
+    imageCreateInfo.width = width;
+    imageCreateInfo.height = height;
+
+    int len = imageCreateInfo.width * imageCreateInfo.height * 4;
+    imageCreateInfo.bufferData.resize(len);
+    memcpy(imageCreateInfo.bufferData.data(), pixels, len);
+    stbi_image_free(pixels);
+
+    //todo - add other formats support
+    imageCreateInfo.format = Format::R8G8B8A8_UNORM;
+    imageCreateInfo.mipLevels = 1;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.tiling = ImageTiling::LINEAR;
+    imageCreateInfo.memoryProperties = {MemoryProperty::DEVICE_LOCAL};
+    imageCreateInfo.aspects = {ImageAspect::COLOR};
+    imageCreateInfo.usages = {ImageUsage::SAMPLED};
+    imageCreateInfo.layout = ImageLayout::SHADER_READ_ONLY_OPTIMAL;
+
+    TextureCreateInfo textureCreateInfo = {};
+    textureCreateInfo.imageCreateInfo = std::move(imageCreateInfo);
+    textureCreateInfo.filter = Filter::LINEAR;
+    return textureCreateInfo;
 }
 
 

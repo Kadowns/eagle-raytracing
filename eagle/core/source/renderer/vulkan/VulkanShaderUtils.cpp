@@ -4,7 +4,7 @@
 
 #include <eagle/core/renderer/vulkan/VulkanShaderUtils.h>
 #include <eagle/core/renderer/vulkan/spirv_reflect.h>
-#include <eagle/core/renderer/vulkan/VulkanConversor.h>
+#include <eagle/core/renderer/vulkan/VulkanConverter.h>
 
 
 EG_BEGIN
@@ -37,8 +37,8 @@ void VulkanShaderUtils::add_bindings_from_shader_stage(const std::vector<uint32_
 
             description.name = std::string(reflectedBinding->name);
             description.binding = reflectedBinding->binding;
-            description.shaderStage = VulkanConversor::to_eg(stage);
-            description.descriptorType = VulkanConversor::to_eg((VkDescriptorType)reflectedBinding->descriptor_type);
+            description.shaderStage = VulkanConverter::to_eg(stage);
+            description.descriptorType = VulkanConverter::to_eg((VkDescriptorType)reflectedBinding->descriptor_type);
             if (description.descriptorType == DescriptorType::UNIFORM_BUFFER){
                 description.size = reflectedBinding->block.size;
 

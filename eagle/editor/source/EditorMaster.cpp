@@ -99,17 +99,24 @@ void EditorMaster::init_imgui() {
 
 void EditorMaster::handle_context_init(RenderingContext &context) {
 
+    EG_TRACE("BEGIN");
 
     ImGuiIO &io = ImGui::GetIO();
-    Pixel *pixels;
+    unsigned char *pixels;
     TextureCreateInfo fontCreateInfo = {};
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &fontCreateInfo.width, &fontCreateInfo.height);
-    fontCreateInfo.format = Format::R8G8B8A8_UNORM;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &fontCreateInfo.imageCreateInfo.width, &fontCreateInfo.imageCreateInfo.height);
     fontCreateInfo.filter = Filter::LINEAR;
-    fontCreateInfo.layerCount = 1;
-    fontCreateInfo.mipLevels = 1;
-    fontCreateInfo.pixels = std::vector<Pixel>(pixels,
-                                               pixels + fontCreateInfo.width * fontCreateInfo.height * 4);
+
+    fontCreateInfo.imageCreateInfo.bufferData = std::vector<unsigned char>(pixels,
+                                               pixels + fontCreateInfo.imageCreateInfo.width * fontCreateInfo.imageCreateInfo.height * 4);
+    fontCreateInfo.imageCreateInfo.aspects = {ImageAspect::COLOR};
+    fontCreateInfo.imageCreateInfo.memoryProperties = {MemoryProperty::DEVICE_LOCAL};
+    fontCreateInfo.imageCreateInfo.usages = {ImageUsage::SAMPLED};
+    fontCreateInfo.imageCreateInfo.layout = ImageLayout::SHADER_READ_ONLY_OPTIMAL;
+    fontCreateInfo.imageCreateInfo.tiling = ImageTiling::OPTIMAL;
+    fontCreateInfo.imageCreateInfo.format = Format::R8G8B8A8_UNORM;
+    fontCreateInfo.imageCreateInfo.arrayLayers = 1;
+    fontCreateInfo.imageCreateInfo.mipLevels = 1;
 
 
     m_font = context.create_texture(fontCreateInfo);
@@ -124,13 +131,13 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
 
     DescriptorBindingDescription binding = {};
     binding.shaderStage = ShaderStage::FRAGMENT;
-    binding.descriptorType = DescriptorType::SAMPLED_IMAGE;
+    binding.descriptorType = DescriptorType::TEXTURE;
     binding.binding = 0;
 
     m_descriptorLayout = context.create_descriptor_set_layout({binding});
 
 
-    ShaderPipelineInfo pipelineInfo = {};
+    ShaderPipelineInfo pipelineInfo = {context.main_render_pass()};
     pipelineInfo.vertexLayout = vertexLayout;
     pipelineInfo.blendEnable = true;
     pipelineInfo.dynamicStates = true;
@@ -146,7 +153,7 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
         {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/text.frag"},
     }, pipelineInfo);
 
-    m_descriptor = context.create_descriptor_set(m_descriptorLayout.lock(), {m_font.lock()->get_image().lock()});
+    m_descriptor = context.create_descriptor_set(m_descriptorLayout.lock(), {m_font.lock()});
 
     io.Fonts->TexID = (ImTextureID)&m_descriptor;
 
@@ -154,6 +161,8 @@ void EditorMaster::handle_context_init(RenderingContext &context) {
                                                   BufferUsage::DYNAMIC);
     m_indexBuffer = context.create_index_buffer(nullptr, 0, IndexBufferType::UINT_16,
                                                 BufferUsage::DYNAMIC);
+
+    EG_TRACE("END");
 
 }
 

@@ -25,13 +25,18 @@ class VulkanImage : public Image {
 public:
 
     VulkanImage(const ImageCreateInfo& imageCreateInfo, const VulkanImageCreateInfo& nativeCreateInfo);
+
+    //Used for swapchain images
+    VulkanImage(const ImageCreateInfo& imageCreateInfo, const VulkanImageCreateInfo& nativeCreateInfo, VkImage image);
     virtual ~VulkanImage();
 
+    inline VkImage& native_image() { return m_image; }
+    inline VkDeviceMemory& native_memory() { return m_memory; }
+    inline VkImageView& native_image_view() { return m_view; }
 
-
-    inline VkImage native_image() { return m_image; }
-    inline VkDeviceMemory native_memory() { return m_memory; }
-    inline VkImageView native_image_view() { return m_view; }
+    inline const VkImage& native_image() const { return m_image; }
+    inline const VkDeviceMemory& native_memory() const { return m_memory; }
+    inline const VkImageView& native_image_view() const { return m_view; }
 
 protected:
     virtual void on_resize() override;
@@ -44,9 +49,10 @@ private:
 
 private:
     VulkanImageCreateInfo m_nativeCreateInfo;
-    VkImage m_image;
-    VkDeviceMemory m_memory;
-    VkImageView m_view;
+    VkImage m_image = nullptr;
+    VkDeviceMemory m_memory = nullptr;
+    VkImageView m_view = nullptr;
+    bool m_createdFromExternalImage = false;
 };
 
 

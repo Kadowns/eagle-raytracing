@@ -20,7 +20,7 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanTexture.h"
-#include "VulkanRenderTarget.h"
+//#include "VulkanRenderTarget.h"
 #include "VulkanCommand.h"
 #include "VulkanCommandList.h"
 #include "VulkanCommandBuffer.h"
@@ -73,7 +73,9 @@ public:
     virtual void handle_window_resized(int width, int height) override;
     virtual bool prepare_frame() override;
     virtual Reference <Eagle::CommandBuffer> create_command_buffer() override;
-    virtual const Reference <Eagle::RenderTarget> main_render_target() override;
+
+    virtual Reference<RenderPass> main_render_pass() override;
+    virtual Reference<Framebuffer> main_frambuffer() override;
 
     virtual void set_recreation_callback(std::function<void()> recreation_callback) override;
 
@@ -103,15 +105,11 @@ protected:
 
     virtual void create_swapchain();
 
-    virtual void create_render_targets();
-
     virtual void create_command_pool();
 
     virtual void allocate_command_buffers();
 
     virtual void create_sync_objects();
-
-    virtual void create_depth_resources();
 
     virtual void create_render_pass();
 
@@ -171,8 +169,8 @@ public:
     virtual Handle<Texture>
     create_texture(const TextureCreateInfo &createInfo) override;
 
-    virtual Handle<RenderTarget>
-    create_render_target(const std::vector<RenderTargetAttachment> &attachments) override;
+    virtual Handle<Image>
+    create_image(const ImageCreateInfo& createInfo) override;
 
     virtual Handle <StorageBuffer> create_storage_buffer(size_t size, void *data, BufferUsage usage) override;
 
@@ -180,8 +178,6 @@ public:
     create_compute_shader(const std::string& path) override;
 
     virtual void destroy_texture_2d(const Reference<Texture> &texture) override;
-
-    virtual void destroy_render_target(const Reference<RenderTarget> &renderTarget) override;
 
 private:
 
@@ -203,7 +199,6 @@ protected:
     struct {
         uint32_t imageIndex = 0;
         uint32_t imageCount;
-        VulkanImageAttachment depth;
         VkFormat swapchainFormat;
         VkExtent2D extent2D;
         VkSwapchainKHR swapchain;
@@ -231,7 +226,7 @@ protected:
     std::vector<Reference<VulkanShader>> m_shaders;
     std::vector<Reference<VulkanComputeShader>> m_computeShaders;
     std::vector<Reference<VulkanTexture>> m_textures;
-    std::vector<Reference<VulkanCustomRenderTarget>> m_renderTargets;
+    std::vector<Reference<VulkanImage>> m_images;
 
     uint32_t m_currentFrame = 0;
 

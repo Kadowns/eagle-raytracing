@@ -3,7 +3,7 @@
 
 #include "eagle/core/renderer/Shader.h"
 #include "VulkanCore.h"
-#include "VulkanRenderTarget.h"
+//#include "VulkanRenderTarget.h"
 #include "VulkanDescriptorSetLayout.h"
 
 EG_BEGIN
@@ -14,7 +14,6 @@ public:
 
     struct VulkanShaderCreateInfo {
         VkDevice device;
-        VkRenderPass* pRenderPass;
         VkExtent2D* pExtent;
     };
 

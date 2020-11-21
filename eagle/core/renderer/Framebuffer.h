@@ -10,7 +10,22 @@
 
 EG_BEGIN
 
+struct FramebufferCreateInfo {
+    std::vector<Reference<Image>> attachments;
+    uint32_t width, height;
+};
+
 class Framebuffer {
+public:
+    Framebuffer(const FramebufferCreateInfo& createInfo) : m_createInfo(createInfo) {}
+    virtual ~Framebuffer() = default;
+
+    inline const std::vector<Reference<Image>>& attachments() const { return m_createInfo.attachments; }
+    inline uint32_t width() const { return m_createInfo.width; }
+    inline uint32_t height() const { return m_createInfo.height; }
+
+protected:
+    FramebufferCreateInfo m_createInfo;
 };
 
 EG_END

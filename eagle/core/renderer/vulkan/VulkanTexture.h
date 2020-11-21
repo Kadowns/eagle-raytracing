@@ -22,23 +22,24 @@ struct VulkanTextureCreateInfo {
 class VulkanTexture : public Texture {
 public:
     VulkanTexture(const TextureCreateInfo &textureCreateInfo,
-                    const VulkanTextureCreateInfo &vulkanInfo);
-    ~VulkanTexture();
-
-    virtual void apply() override;
-
-    virtual Handle<Image> get_image() override;
+                  const VulkanTextureCreateInfo &nativeCreateInfo);
+    virtual ~VulkanTexture();
 
 
-private:
+    virtual void resize(uint32_t width, uint32_t height) override;
 
-    Reference<VulkanBuffer> create_staging_buffer();
-
-    void copy_buffer_to_image(const Reference<VulkanBuffer>& buffer, VkImage image, uint32_t width, uint32_t height);
+    virtual Reference<Image> image() const override { return m_image; }
+    inline const Reference<VulkanImage>& native_image() const { return m_image; }
+    inline VkSampler sampler() const { return m_sampler; }
 
 private:
-    VulkanTextureCreateInfo m_vulkanInfo;
+    void create();
+    void clear();
+
+private:
+    VulkanTextureCreateInfo m_nativeCreateInfo;
     Reference<VulkanImage> m_image;
+    VkSampler m_sampler;
 };
 
 EG_END

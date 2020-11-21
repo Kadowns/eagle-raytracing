@@ -105,6 +105,8 @@ void RaytracerSystem::update(entityx::EntityManager &entities, entityx::EventMan
 void RaytracerSystem::init_render_target() {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
 
+    EG_TRACE("BEGIN");
+
     if (data.computeTarget.lock()){
         RenderMaster::context().destroy_texture_2d(data.computeTarget.lock());
     }
@@ -112,13 +114,17 @@ void RaytracerSystem::init_render_target() {
     auto& window = Application::instance().window();
 
     TextureCreateInfo textureCreateInfo = {};
-    textureCreateInfo.usage = TextureUsage::STORAGE;
-    textureCreateInfo.width = window.get_width();
-    textureCreateInfo.height = window.get_height();
     textureCreateInfo.filter = Filter::NEAREST;
-    textureCreateInfo.layerCount = 1;
-    textureCreateInfo.mipLevels = 1;
-    textureCreateInfo.format = Format::R8G8B8A8_UNORM;
+    textureCreateInfo.imageCreateInfo.usages = {ImageUsage::STORAGE, ImageUsage::SAMPLED};
+    textureCreateInfo.imageCreateInfo.layout = ImageLayout::GENERAL;
+    textureCreateInfo.imageCreateInfo.aspects = {ImageAspect::COLOR};
+    textureCreateInfo.imageCreateInfo.format = Format::R8G8B8A8_UNORM;
+    textureCreateInfo.imageCreateInfo.memoryProperties = {MemoryProperty::DEVICE_LOCAL};
+    textureCreateInfo.imageCreateInfo.tiling = ImageTiling::OPTIMAL;
+    textureCreateInfo.imageCreateInfo.width = window.get_width();
+    textureCreateInfo.imageCreateInfo.height = window.get_height();
+    textureCreateInfo.imageCreateInfo.mipLevels = 1;
+    textureCreateInfo.imageCreateInfo.arrayLayers = 1;
 
     data.computeTarget = RenderMaster::context().create_texture(textureCreateInfo);
 
@@ -134,37 +140,33 @@ void RaytracerSystem::init_render_target() {
     if (!data.quad.descriptorSet.lock()){
         data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(
                 data.quad.shader.lock()->get_descriptor_set_layout(0).lock(),
-                {data.computeTarget.lock()->get_image().lock()}
+                {data.computeTarget.lock()}
                 );
     }
     else{
-        data.quad.descriptorSet.lock()->update({data.computeTarget.lock()->get_image().lock()});
+        data.quad.descriptorSet.lock()->update({data.computeTarget.lock()});
     }
 
     data.computeShader.lock()->update_descriptor_items({
-        data.computeTarget.lock()->get_image().lock(),
+        data.computeTarget.lock()->image(),
         data.uniformBuffer.lock(),
         data.spheresBuffer.lock(),
         data.boxesBuffer.lock(),
-        data.skybox.lock()->get_image().lock()
+        data.skybox.lock()->image()
     });
 
-    EventMaster::instance().emit(OnRaytracerTargetCreated(data.computeTarget.lock()->get_image().lock()));
+    EventMaster::instance().emit(OnRaytracerTargetCreated(data.computeTarget.lock()->image()));
+    EG_TRACE("END");
 }
 
 void RaytracerSystem::handle_context_init() {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
     data.computeShader = RenderMaster::context().create_compute_shader(ProjectRoot + "/shaders/compute.comp");
-
-    TextureCreateInfo skyboxCreateInfo = TextureLoader::load_pixels(ProjectRoot + "/textures/stars.hdr");
-    skyboxCreateInfo.filter = Filter::LINEAR;
-    skyboxCreateInfo.usage = TextureUsage::READ;
-    data.skybox = RenderMaster::context().create_texture(skyboxCreateInfo);
-
+    data.skybox = RenderMaster::context().create_texture(TextureLoader::load_pixels(ProjectRoot + "/textures/stars.hdr"));
     data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(), BufferUsage::DYNAMIC);
     data.boxesBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::BoxData) * data.boxesData.size(), data.boxesData.data(), BufferUsage::DYNAMIC);
 
-    ShaderPipelineInfo pipelineInfo = {};
+    ShaderPipelineInfo pipelineInfo = {RenderMaster::context().main_render_pass()};
     data.quad.shader = RenderMaster::context().create_shader({
         {ShaderStage::VERTEX, ProjectRoot + "/shaders/quad.vert"},
         {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/quad.frag"},
@@ -197,13 +199,13 @@ void RaytracerSystem::handle_context_deinit() {
 
 void RaytracerSystem::handle_frame_begin() {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    auto image = data.computeTarget.lock()->get_image().lock();
-    data.computeShader.lock()->dispatch(image->get_width() / 16, image->get_height() / 16, 1);
+    auto image = data.computeTarget.lock()->image();
+    data.computeShader.lock()->dispatch(image->width() / 16, image->height() / 16, 1);
 }
 
 void RaytracerSystem::handle_command_buffer_begin(const Reference<CommandBuffer> &commandBuffer) {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    commandBuffer->pipeline_barrier(data.computeTarget.lock()->get_image().lock()->get_attachment().lock(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
+    commandBuffer->pipeline_barrier(data.computeTarget.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
 }
 
 void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<CommandBuffer> &commandBuffer) {
@@ -211,10 +213,6 @@ void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<Com
     commandBuffer->bind_shader(data.quad.shader.lock());
     commandBuffer->bind_descriptor_sets(data.quad.descriptorSet.lock(), 0);
     commandBuffer->draw(3);
-
-//    commandBuffer->bind_shader(data.gizmos.shader.lock());
-//    commandBuffer->bind_vertex_buffer(data.gizmos.vertexBuffer.lock());
-//    commandBuffer->draw(4);
 }
 
 void RaytracerSystem::receive(const OnCameraUpdate &ev) {
