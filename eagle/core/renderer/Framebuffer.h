@@ -7,10 +7,12 @@
 
 #include <eagle/core/renderer/RenderingCore.h>
 #include <eagle/core/renderer/Image.h>
+#include <eagle/core/renderer/RenderPass.h>
 
 EG_BEGIN
 
 struct FramebufferCreateInfo {
+    Reference<RenderPass> renderPass;
     std::vector<Reference<Image>> attachments;
     uint32_t width, height;
 };

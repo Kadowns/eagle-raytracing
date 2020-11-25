@@ -41,9 +41,10 @@ struct Box {
 
 layout (local_size_x = 16, local_size_y = 16) in;
 
-layout (binding = 0, rgba8) uniform image2D resultImage;
+layout (binding = 0, rgba8) uniform image2D colorImage;
+layout (binding = 1, rgba8) uniform image2D depthImage;
 
-layout (binding = 1) uniform Ubo {
+layout (binding = 2) uniform Ubo {
     Camera camera;
     vec2 pixelOffset;
     vec4 light;
@@ -52,15 +53,15 @@ layout (binding = 1) uniform Ubo {
     int boxCount;
 } ubo;
 
-layout (std140, binding = 2) buffer SphereBuffer {
+layout (std140, binding = 3) buffer SphereBuffer {
     Sphere[] spheres;
 } uSphereBuffer;
 
-layout (std140, binding = 3) buffer BoxBuffer {
+layout (std140, binding = 4) buffer BoxBuffer {
     Box[] boxes;
 } uBoxBuffer;
 
-layout (binding = 4) uniform sampler2D uSkybox;
+layout (binding = 5) uniform sampler2D uSkybox;
 
 RayHit CreateRayHit() {
     RayHit hit;
@@ -202,7 +203,7 @@ vec4 blend(vec4 src, vec4 dst){
 }
 
 void main() {
-    ivec2 texSize = imageSize(resultImage);
+    ivec2 texSize = imageSize(colorImage);
     ivec2 id = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
     vec2 uv = vec2((id.xy) / vec2(texSize.x, texSize.y) * 2.0f - 1.0f);
@@ -210,17 +211,24 @@ void main() {
     Ray ray = CreateCameraRay(uv);
 
     vec3 result = vec3(0);
-    for (int i = 0; i < 8; i++) {
-        RayHit hit = Trace(ray);
-        result += ray.energy * Shade(ray, hit);
-        if (ray.energy == vec3(0))
-        break;
-    }
-    vec4 dst = imageLoad(resultImage, id);
-    imageStore(resultImage, id, blend(vec4(result, 1.0f / (ubo.sampleIndex + 1.0f)), dst));
 
-//    RayHit hit = Trace(ray);
-//    float dist = hit.distance / 100;
-//    imageStore(resultImage, id, vec4(dist, dist, dist, 1.0f));
+    RayHit hit = Trace(ray);
+    result += ray.energy * Shade(ray, hit);
+
+    //store depth image
+    float dist = hit.distance / 100;
+    imageStore(depthImage, id, vec4(dist, dist, dist, 1.0f));
+
+    //reflect ray for color image
+    if (ray.energy != vec3(0)){
+        for (int i = 0; i < 7; i++) {
+            RayHit hit = Trace(ray);
+            result += ray.energy * Shade(ray, hit);
+            if (ray.energy == vec3(0))
+                break;
+        }
+    }
+    vec4 dst = imageLoad(colorImage, id);
+    imageStore(colorImage, id, blend(vec4(result, 1.0f / (ubo.sampleIndex + 1.0f)), dst));
 
 }

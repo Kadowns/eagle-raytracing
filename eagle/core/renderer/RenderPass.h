@@ -13,8 +13,8 @@ EG_BEGIN
 
 struct RenderAttachmentDescription {
     Format format;
-    AttachmentLoadOperator loadOp;
-    AttachmentStoreOperator storeOp;
+    AttachmentLoadOperator loadOp = AttachmentLoadOperator::DONT_CARE;
+    AttachmentStoreOperator storeOp = AttachmentStoreOperator::STORE;
     AttachmentLoadOperator stencilLoadOp = AttachmentLoadOperator::DONT_CARE;
     AttachmentStoreOperator stencilStoreOp = AttachmentStoreOperator::DONT_CARE;
     ImageLayout initialLayout;
@@ -24,8 +24,8 @@ struct RenderAttachmentDescription {
 class RenderPass {
 public:
 
-    RenderPass(std::vector<RenderAttachmentDescription>  colorAttachments, const RenderAttachmentDescription& depthAttachment) :
-        m_colorAttachments(std::move(colorAttachments)),
+    RenderPass(const std::vector<RenderAttachmentDescription> &colorAttachments, const RenderAttachmentDescription& depthAttachment) :
+        m_colorAttachments(colorAttachments),
         m_depthAttachment(depthAttachment) {}
     RenderPass(const RenderAttachmentDescription& colorAttachment, const RenderAttachmentDescription& depthAttachment) :
         RenderPass(std::vector<RenderAttachmentDescription>{colorAttachment}, depthAttachment) {}

@@ -14,7 +14,6 @@ EG_BEGIN
 
 struct VulkanFramebufferCreateInfo {
     VkDevice device;
-    Reference<VulkanRenderPass> renderPass;
 };
 
 

@@ -40,20 +40,23 @@ struct RaytracerData {
     std::array<SphereData, MAX_SPHERES> spheresData;
     std::array<BoxData, MAX_SPHERES> boxesData;
     Handle<UniformBuffer> uniformBuffer;
-    Handle<ComputeShader> computeShader;
-    Handle<StorageBuffer> spheresBuffer, boxesBuffer;
-    Handle<Texture> computeTarget;
-    Handle<Texture> skybox;
+    struct {
+        Handle<Texture> color, depth, skybox;
+        Handle<ComputeShader> shader;
+        Handle<StorageBuffer> spheresBuffer, boxesBuffer;
+    } compute;
+
+    struct {
+        Handle<RenderPass> renderPass;
+        Handle<Framebuffer> framebuffer;
+        Handle<Shader> shader;
+        Handle<VertexBuffer> vertexBuffer;
+    } offlineRenderpass;
+
     struct{
         Handle<Shader> shader;
         Handle<DescriptorSet> descriptorSet;
     } quad;
-    struct {
-        Handle<Shader> shader;
-        Handle<VertexBuffer> vertexBuffer;
-    } gizmos;
-
-
 };
 
 EG_ENGINE_END

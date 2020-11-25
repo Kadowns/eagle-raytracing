@@ -71,6 +71,12 @@ public:
     virtual Handle<Texture>
     create_texture(const TextureCreateInfo &createInfo) = 0;
 
+    virtual Handle<RenderPass>
+    create_render_pass(const std::vector<RenderAttachmentDescription>& colorAttachments, const RenderAttachmentDescription& depthAttachment) = 0;
+
+    virtual Handle<Framebuffer>
+    create_framebuffer(const FramebufferCreateInfo& createInfo) = 0;
+
     virtual Handle<Image>
     create_image(const ImageCreateInfo& createInfo) = 0;
 

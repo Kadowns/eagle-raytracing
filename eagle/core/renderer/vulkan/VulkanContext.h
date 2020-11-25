@@ -169,6 +169,12 @@ public:
     virtual Handle<Texture>
     create_texture(const TextureCreateInfo &createInfo) override;
 
+    virtual Handle<RenderPass>
+    create_render_pass(const std::vector<RenderAttachmentDescription>& colorAttachments, const RenderAttachmentDescription& depthAttachment) override;
+
+    virtual Handle<Framebuffer>
+    create_framebuffer(const FramebufferCreateInfo& createInfo) override;
+
     virtual Handle<Image>
     create_image(const ImageCreateInfo& createInfo) override;
 
@@ -227,6 +233,8 @@ protected:
     std::vector<Reference<VulkanComputeShader>> m_computeShaders;
     std::vector<Reference<VulkanTexture>> m_textures;
     std::vector<Reference<VulkanImage>> m_images;
+    std::vector<Reference<VulkanRenderPass>> m_renderPasses;
+    std::vector<Reference<VulkanFramebuffer>> m_framebuffers;
 
     uint32_t m_currentFrame = 0;
 

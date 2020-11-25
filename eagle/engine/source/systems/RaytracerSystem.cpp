@@ -107,8 +107,12 @@ void RaytracerSystem::init_render_target() {
 
     EG_TRACE("BEGIN");
 
-    if (data.computeTarget.lock()){
-        RenderMaster::context().destroy_texture_2d(data.computeTarget.lock());
+    if (data.compute.color.lock()){
+        RenderMaster::context().destroy_texture_2d(data.compute.color.lock());
+    }
+
+    if (data.compute.depth.lock()){
+        RenderMaster::context().destroy_texture_2d(data.compute.depth.lock());
     }
 
     auto& window = Application::instance().window();
@@ -126,7 +130,24 @@ void RaytracerSystem::init_render_target() {
     textureCreateInfo.imageCreateInfo.mipLevels = 1;
     textureCreateInfo.imageCreateInfo.arrayLayers = 1;
 
-    data.computeTarget = RenderMaster::context().create_texture(textureCreateInfo);
+    data.compute.color = RenderMaster::context().create_texture(textureCreateInfo);
+
+
+    textureCreateInfo.filter = Filter::NEAREST;
+    textureCreateInfo.imageCreateInfo.usages = {ImageUsage::STORAGE, ImageUsage::DEPTH_STENCIL_ATTACHMENT};
+    textureCreateInfo.imageCreateInfo.layout = ImageLayout::GENERAL;
+    textureCreateInfo.imageCreateInfo.aspects = {ImageAspect::COLOR, ImageAspect::DEPTH};
+    textureCreateInfo.imageCreateInfo.format = Format::D32_SFLOAT;
+    textureCreateInfo.imageCreateInfo.memoryProperties = {MemoryProperty::DEVICE_LOCAL};
+    textureCreateInfo.imageCreateInfo.tiling = ImageTiling::OPTIMAL;
+    textureCreateInfo.imageCreateInfo.width = window.get_width();
+    textureCreateInfo.imageCreateInfo.height = window.get_height();
+    textureCreateInfo.imageCreateInfo.mipLevels = 1;
+    textureCreateInfo.imageCreateInfo.arrayLayers = 1;
+
+    data.compute.depth = RenderMaster::context().create_texture(textureCreateInfo);
+
+
 
     data.ubo.sampleCount = 0;
     if (!data.uniformBuffer.lock()){
@@ -140,31 +161,38 @@ void RaytracerSystem::init_render_target() {
     if (!data.quad.descriptorSet.lock()){
         data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(
                 data.quad.shader.lock()->get_descriptor_set_layout(0).lock(),
-                {data.computeTarget.lock()}
+                {
+                    data.compute.color.lock(),
+                    data.compute.depth.lock()
+                }
                 );
     }
     else{
-        data.quad.descriptorSet.lock()->update({data.computeTarget.lock()});
+        data.quad.descriptorSet.lock()->update({
+            data.compute.color.lock(),
+            data.compute.depth.lock()
+        });
     }
 
-    data.computeShader.lock()->update_descriptor_items({
-        data.computeTarget.lock()->image(),
+    data.compute.shader.lock()->update_descriptor_items({
+        data.compute.color.lock()->image(),
+        data.compute.depth.lock()->image(),
         data.uniformBuffer.lock(),
-        data.spheresBuffer.lock(),
-        data.boxesBuffer.lock(),
-        data.skybox.lock()->image()
+        data.compute.spheresBuffer.lock(),
+        data.compute.boxesBuffer.lock(),
+        data.compute.skybox.lock()->image()
     });
 
-    EventMaster::instance().emit(OnRaytracerTargetCreated(data.computeTarget.lock()->image()));
+    EventMaster::instance().emit(OnRaytracerTargetCreated(data.compute.color.lock()->image()));
     EG_TRACE("END");
 }
 
 void RaytracerSystem::handle_context_init() {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    data.computeShader = RenderMaster::context().create_compute_shader(ProjectRoot + "/shaders/compute.comp");
-    data.skybox = RenderMaster::context().create_texture(TextureLoader::load_pixels(ProjectRoot + "/textures/stars.hdr"));
-    data.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(), BufferUsage::DYNAMIC);
-    data.boxesBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::BoxData) * data.boxesData.size(), data.boxesData.data(), BufferUsage::DYNAMIC);
+    data.compute.shader = RenderMaster::context().create_compute_shader(ProjectRoot + "/shaders/compute.comp");
+    data.compute.skybox = RenderMaster::context().create_texture(TextureLoader::load_pixels(ProjectRoot + "/textures/stars.hdr"));
+    data.compute.spheresBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::SphereData) * data.spheresData.size(), data.spheresData.data(), BufferUsage::DYNAMIC);
+    data.compute.boxesBuffer = RenderMaster::context().create_storage_buffer(sizeof(RaytracerData::BoxData) * data.boxesData.size(), data.boxesData.data(), BufferUsage::DYNAMIC);
 
     ShaderPipelineInfo pipelineInfo = {RenderMaster::context().main_render_pass()};
     data.quad.shader = RenderMaster::context().create_shader({
@@ -172,25 +200,19 @@ void RaytracerSystem::handle_context_init() {
         {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/quad.frag"},
     }, pipelineInfo);
 
+    std::vector<float> vertices = {
+            -1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            0.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+    };
 
-//    pipelineInfo.primitiveTopology = PrimitiveTopology::LINE_LIST;
-//    pipelineInfo.depthTesting = true;
-//    pipelineInfo.vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
-//    data.gizmos.shader = RenderMaster::context().create_shader({
-//        {ShaderStage::VERTEX, ProjectRoot + "/shaders/gizmos.vert"},
-//        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/gizmos.frag"},
-//    }, pipelineInfo);
-//
-//    std::vector<float> vertices = {
-//            -1.0f, 0.0f, 0.0f,
-//            1.0f, 0.0f, 0.0f,
-//            0.0f, -1.0f, 0.0f,
-//            0.0f, 1.0f, 0.0f,
-//    };
-//
-//    data.gizmos.vertexBuffer = RenderMaster::context().create_vertex_buffer(vertices.data(), vertices.size(), pipelineInfo.vertexLayout, BufferUsage::CONSTANT);
+    auto vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
+
+    data.offlineRenderpass.vertexBuffer = RenderMaster::context().create_vertex_buffer(vertices.data(), vertices.size(), vertexLayout, BufferUsage::CONSTANT);
 
     init_render_target();
+    init_offline_render_pass();
 }
 
 void RaytracerSystem::handle_context_deinit() {
@@ -199,13 +221,20 @@ void RaytracerSystem::handle_context_deinit() {
 
 void RaytracerSystem::handle_frame_begin() {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    auto image = data.computeTarget.lock()->image();
-    data.computeShader.lock()->dispatch(image->width() / 16, image->height() / 16, 1);
+    auto image = data.compute.color.lock()->image();
+    data.compute.shader.lock()->dispatch(image->width() / 16, image->height() / 16, 1);
 }
 
 void RaytracerSystem::handle_command_buffer_begin(const Reference<CommandBuffer> &commandBuffer) {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
-    commandBuffer->pipeline_barrier(data.computeTarget.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
+    commandBuffer->pipeline_barrier(data.compute.color.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
+    commandBuffer->pipeline_barrier(data.compute.depth.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
+
+    commandBuffer->begin_render_pass(data.offlineRenderpass.renderPass.lock(), data.offlineRenderpass.framebuffer.lock());
+    commandBuffer->bind_shader(data.offlineRenderpass.shader.lock());
+    commandBuffer->bind_vertex_buffer(data.offlineRenderpass.vertexBuffer.lock());
+    commandBuffer->draw(4);
+    commandBuffer->end_render_pass();
 }
 
 void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<CommandBuffer> &commandBuffer) {
@@ -246,7 +275,7 @@ void RaytracerSystem::update_sphere_buffer(entityx::EntityManager &entities) {
         }
     }
     data.ubo.sphereCount = it - data.spheresData.begin();
-    if (auto buffer = data.spheresBuffer.lock()){
+    if (auto buffer = data.compute.spheresBuffer.lock()){
         buffer->set_data(data.spheresData.data(), sizeof(RaytracerData::SphereData) * data.ubo.sphereCount, 0);
         buffer->push();
         data.ubo.sampleCount = 0;
@@ -272,7 +301,7 @@ void RaytracerSystem::update_box_buffer(entityx::EntityManager &entities) {
         }
     }
     data.ubo.boxCount = it - data.boxesData.begin();
-    if (auto buffer = data.boxesBuffer.lock()){
+    if (auto buffer = data.compute.boxesBuffer.lock()){
         buffer->set_data(data.boxesData.data(), sizeof(RaytracerData::BoxData) * data.ubo.boxCount, 0);
         buffer->push();
         data.ubo.sampleCount = 0;
@@ -296,6 +325,47 @@ void RaytracerSystem::receive(const entityx::ComponentRemovedEvent<Box> &ev) {
     m_updateBoxes = true;
 }
 
+void RaytracerSystem::init_offline_render_pass() {
+    RaytracerData& data = SingletonComponent::get<RaytracerData>();
+
+    RenderAttachmentDescription colorAttachment = {};
+    colorAttachment.format = Format::R8G8B8A8_UNORM;
+    colorAttachment.loadOp = AttachmentLoadOperator::LOAD;
+    colorAttachment.storeOp = AttachmentStoreOperator::STORE;
+    colorAttachment.initialLayout = ImageLayout::UNDEFINED;
+    colorAttachment.finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL;
+
+    RenderAttachmentDescription depthAttachment = {};
+    depthAttachment.format = Format::D32_SFLOAT;
+    depthAttachment.loadOp = AttachmentLoadOperator::LOAD;
+    depthAttachment.storeOp = AttachmentStoreOperator::DONT_CARE;
+    depthAttachment.initialLayout = ImageLayout::GENERAL;
+    depthAttachment.finalLayout = ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    data.offlineRenderpass.renderPass = RenderMaster::context().create_render_pass({colorAttachment}, depthAttachment);
+
+
+    auto& window = Application::instance().window();
+
+
+    FramebufferCreateInfo framebufferCreateInfo = {};
+    framebufferCreateInfo.renderPass = data.offlineRenderpass.renderPass.lock();
+    framebufferCreateInfo.width = window.get_width();
+    framebufferCreateInfo.height = window.get_height();
+    framebufferCreateInfo.attachments = {data.compute.color.lock()->image(), data.compute.depth.lock()->image()};
+
+    data.offlineRenderpass.framebuffer = RenderMaster::context().create_framebuffer(framebufferCreateInfo);
+
+    ShaderPipelineInfo pipelineInfo = {data.offlineRenderpass.renderPass.lock()};
+    pipelineInfo.primitiveTopology = PrimitiveTopology::LINE_LIST;
+    pipelineInfo.depthTesting = true;
+    pipelineInfo.blendEnable = true;
+    pipelineInfo.vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
+    data.offlineRenderpass.shader = RenderMaster::context().create_shader({
+        {ShaderStage::VERTEX, ProjectRoot + "/shaders/gizmos.vert"},
+        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/gizmos.frag"},
+        }, pipelineInfo);
+}
 
 
 EG_ENGINE_END

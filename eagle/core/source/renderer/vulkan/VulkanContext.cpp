@@ -62,6 +62,8 @@ void VulkanContext::deinit() {
     m_shaders.clear();
     m_computeShaders.clear();
     m_present.renderPass.reset();
+    m_renderPasses.clear();
+    m_framebuffers.clear();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         VK_CALL
@@ -723,10 +725,10 @@ void VulkanContext::create_framebuffers() {
     FramebufferCreateInfo framebufferCreateInfo = {};
     framebufferCreateInfo.width = m_present.extent2D.width;
     framebufferCreateInfo.height = m_present.extent2D.height;
+    framebufferCreateInfo.renderPass = m_present.renderPass;
 
     VulkanFramebufferCreateInfo nativeFramebufferCreateInfo = {};
     nativeFramebufferCreateInfo.device = m_device;
-    nativeFramebufferCreateInfo.renderPass = m_present.renderPass;
 
     m_present.framebuffers.resize(m_present.imageCount);
     for (size_t i = 0; i < m_present.framebuffers.size(); i++){
@@ -1044,6 +1046,26 @@ VulkanContext::create_image(const ImageCreateInfo &createInfo) {
     m_images.emplace_back(std::make_shared<VulkanImage>(createInfo, vulkanImageCreateInfo));
     return m_images.back();
 }
+
+
+Handle<RenderPass> VulkanContext::create_render_pass(const std::vector<RenderAttachmentDescription> &colorAttachments,
+                                                     const RenderAttachmentDescription &depthAttachment) {
+    VulkanRenderPassCreateInfo createInfo = {};
+    createInfo.device = m_device;
+
+    m_renderPasses.emplace_back(std::make_shared<VulkanRenderPass>(createInfo, colorAttachments, depthAttachment));
+    return m_renderPasses.back();
+}
+
+Handle<Framebuffer> VulkanContext::create_framebuffer(const FramebufferCreateInfo &createInfo) {
+
+    VulkanFramebufferCreateInfo vulkanCreateInfo = {};
+    vulkanCreateInfo.device = m_device;
+
+    m_framebuffers.emplace_back(std::make_shared<VulkanFramebuffer>(createInfo, vulkanCreateInfo));
+    return m_framebuffers.back();
+}
+
 
 void VulkanContext::create_offscreen_render_pass() {
     // + 1 for depth attachment

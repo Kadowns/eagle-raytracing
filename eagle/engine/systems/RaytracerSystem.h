@@ -30,6 +30,7 @@ public:
     void receive(const entityx::ComponentRemovedEvent<Box>& ev);
 private:
     void init_render_target();
+    void init_offline_render_pass();
     void handle_context_init();
     void handle_context_deinit();
     void handle_frame_begin();
