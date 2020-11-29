@@ -15,6 +15,8 @@ struct OnRaytracerTargetCreated {
     Reference<Image> target;
 };
 
+struct OnSceneRecreate {};
+
 class EventMaster {
 public:
     static EventDispatcher& instance(){

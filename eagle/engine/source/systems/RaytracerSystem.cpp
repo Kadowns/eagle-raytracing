@@ -111,10 +111,6 @@ void RaytracerSystem::init_render_target() {
         RenderMaster::context().destroy_texture_2d(data.compute.color.lock());
     }
 
-    if (data.compute.depth.lock()){
-        RenderMaster::context().destroy_texture_2d(data.compute.depth.lock());
-    }
-
     auto& window = Application::instance().window();
 
     TextureCreateInfo textureCreateInfo = {};
@@ -133,21 +129,6 @@ void RaytracerSystem::init_render_target() {
     data.compute.color = RenderMaster::context().create_texture(textureCreateInfo);
 
 
-    textureCreateInfo.filter = Filter::NEAREST;
-    textureCreateInfo.imageCreateInfo.usages = {ImageUsage::STORAGE, ImageUsage::DEPTH_STENCIL_ATTACHMENT};
-    textureCreateInfo.imageCreateInfo.layout = ImageLayout::GENERAL;
-    textureCreateInfo.imageCreateInfo.aspects = {ImageAspect::COLOR, ImageAspect::DEPTH};
-    textureCreateInfo.imageCreateInfo.format = Format::D32_SFLOAT;
-    textureCreateInfo.imageCreateInfo.memoryProperties = {MemoryProperty::DEVICE_LOCAL};
-    textureCreateInfo.imageCreateInfo.tiling = ImageTiling::OPTIMAL;
-    textureCreateInfo.imageCreateInfo.width = window.get_width();
-    textureCreateInfo.imageCreateInfo.height = window.get_height();
-    textureCreateInfo.imageCreateInfo.mipLevels = 1;
-    textureCreateInfo.imageCreateInfo.arrayLayers = 1;
-
-    data.compute.depth = RenderMaster::context().create_texture(textureCreateInfo);
-
-
 
     data.ubo.sampleCount = 0;
     if (!data.uniformBuffer.lock()){
@@ -162,21 +143,18 @@ void RaytracerSystem::init_render_target() {
         data.quad.descriptorSet = RenderMaster::context().create_descriptor_set(
                 data.quad.shader.lock()->get_descriptor_set_layout(0).lock(),
                 {
-                    data.compute.color.lock(),
-                    data.compute.depth.lock()
+                    data.compute.color.lock()
                 }
                 );
     }
     else{
         data.quad.descriptorSet.lock()->update({
-            data.compute.color.lock(),
-            data.compute.depth.lock()
+            data.compute.color.lock()
         });
     }
 
     data.compute.shader.lock()->update_descriptor_items({
         data.compute.color.lock()->image(),
-        data.compute.depth.lock()->image(),
         data.uniformBuffer.lock(),
         data.compute.spheresBuffer.lock(),
         data.compute.boxesBuffer.lock(),
@@ -200,19 +178,7 @@ void RaytracerSystem::handle_context_init() {
         {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/quad.frag"},
     }, pipelineInfo);
 
-    std::vector<float> vertices = {
-            -1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.0f,
-            0.0f, -1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-    };
-
-    auto vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
-
-    data.offlineRenderpass.vertexBuffer = RenderMaster::context().create_vertex_buffer(vertices.data(), vertices.size(), vertexLayout, BufferUsage::CONSTANT);
-
     init_render_target();
-    init_offline_render_pass();
 }
 
 void RaytracerSystem::handle_context_deinit() {
@@ -228,13 +194,6 @@ void RaytracerSystem::handle_frame_begin() {
 void RaytracerSystem::handle_command_buffer_begin(const Reference<CommandBuffer> &commandBuffer) {
     RaytracerData& data = SingletonComponent::get<RaytracerData>();
     commandBuffer->pipeline_barrier(data.compute.color.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
-    commandBuffer->pipeline_barrier(data.compute.depth.lock()->image(), ShaderStage::COMPUTE, ShaderStage::FRAGMENT);
-
-    commandBuffer->begin_render_pass(data.offlineRenderpass.renderPass.lock(), data.offlineRenderpass.framebuffer.lock());
-    commandBuffer->bind_shader(data.offlineRenderpass.shader.lock());
-    commandBuffer->bind_vertex_buffer(data.offlineRenderpass.vertexBuffer.lock());
-    commandBuffer->draw(4);
-    commandBuffer->end_render_pass();
 }
 
 void RaytracerSystem::handle_command_buffer_main_render_pass(const Reference<CommandBuffer> &commandBuffer) {
@@ -323,48 +282,6 @@ void RaytracerSystem::receive(const entityx::ComponentAddedEvent<Box> &ev) {
 
 void RaytracerSystem::receive(const entityx::ComponentRemovedEvent<Box> &ev) {
     m_updateBoxes = true;
-}
-
-void RaytracerSystem::init_offline_render_pass() {
-    RaytracerData& data = SingletonComponent::get<RaytracerData>();
-
-    RenderAttachmentDescription colorAttachment = {};
-    colorAttachment.format = Format::R8G8B8A8_UNORM;
-    colorAttachment.loadOp = AttachmentLoadOperator::LOAD;
-    colorAttachment.storeOp = AttachmentStoreOperator::STORE;
-    colorAttachment.initialLayout = ImageLayout::UNDEFINED;
-    colorAttachment.finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL;
-
-    RenderAttachmentDescription depthAttachment = {};
-    depthAttachment.format = Format::D32_SFLOAT;
-    depthAttachment.loadOp = AttachmentLoadOperator::LOAD;
-    depthAttachment.storeOp = AttachmentStoreOperator::DONT_CARE;
-    depthAttachment.initialLayout = ImageLayout::GENERAL;
-    depthAttachment.finalLayout = ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    data.offlineRenderpass.renderPass = RenderMaster::context().create_render_pass({colorAttachment}, depthAttachment);
-
-
-    auto& window = Application::instance().window();
-
-
-    FramebufferCreateInfo framebufferCreateInfo = {};
-    framebufferCreateInfo.renderPass = data.offlineRenderpass.renderPass.lock();
-    framebufferCreateInfo.width = window.get_width();
-    framebufferCreateInfo.height = window.get_height();
-    framebufferCreateInfo.attachments = {data.compute.color.lock()->image(), data.compute.depth.lock()->image()};
-
-    data.offlineRenderpass.framebuffer = RenderMaster::context().create_framebuffer(framebufferCreateInfo);
-
-    ShaderPipelineInfo pipelineInfo = {data.offlineRenderpass.renderPass.lock()};
-    pipelineInfo.primitiveTopology = PrimitiveTopology::LINE_LIST;
-    pipelineInfo.depthTesting = true;
-    pipelineInfo.blendEnable = true;
-    pipelineInfo.vertexLayout = VertexLayout(3, {Format::R32G32B32_SFLOAT});
-    data.offlineRenderpass.shader = RenderMaster::context().create_shader({
-        {ShaderStage::VERTEX, ProjectRoot + "/shaders/gizmos.vert"},
-        {ShaderStage::FRAGMENT, ProjectRoot + "/shaders/gizmos.frag"},
-        }, pipelineInfo);
 }
 
 

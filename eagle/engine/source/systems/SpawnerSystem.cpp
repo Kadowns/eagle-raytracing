@@ -5,6 +5,7 @@
 #include <eagle/engine/systems/SpawnerSystem.h>
 #include <eagle/engine/components/Spawner.h>
 #include <eagle/engine/components/Transform.h>
+#include <eagle/engine/components/Camera.h>
 #include <eagle/engine/components/SceneData.h>
 #include <eagle/engine/components/SingletonComponent.h>
 #include <eagle/engine/components/Sphere.h>
@@ -23,7 +24,9 @@ void SpawnerSystem::configure(entityx::EntityManager &entities, entityx::EventMa
 
 void SpawnerSystem::update(entityx::EntityManager &entities, entityx::EventManager &events, entityx::TimeDelta dt) {
 
-    entities.each<Transform, Spawner>([&entities](entityx::Entity e, Transform& transform, Spawner& spawner){
+    auto& spawner = SingletonComponent::get<Spawner>();
+
+    entities.each<Transform, Camera>([&entities, &spawner](entityx::Entity e, Transform& transform, Camera& camera){
 
         if (Input::instance().key_pressed(EG_KEY_G)){
             SceneData& scene = SingletonComponent::get<SceneData>();
@@ -37,8 +40,14 @@ void SpawnerSystem::update(entityx::EntityManager &entities, entityx::EventManag
             sphere->specular = metal ? glm::vec3(color.r, color.g, color.b) : glm::vec3(0.01f);
             auto tr = s.assign<Transform>(transform);
             tr->translate(transform.front() * sphere->radius * 2.0f);
-            auto rb = s.assign<Rigidbody>();
-            rb->velocity = transform.front() * 40.0f;
+            if (spawner.isStatic){
+                s.assign<Rigidbody>(0, 0, 0, 0.4, Rigidbody::Mode::STATIC);
+            }
+            else {
+                auto rigidbody = s.assign<Rigidbody>();
+                rigidbody->velocity = transform.front() * 40.0f;
+            }
+
             s.assign<Collider>(std::make_shared<SphereCollider>(sphere->radius));
         }
 
@@ -56,9 +65,18 @@ void SpawnerSystem::update(entityx::EntityManager &entities, entityx::EventManag
             box->albedo = glm::vec3(0.1f);
             box->specular = glm::vec3(0.8f);
             tr->translate(transform.front() * box->radius.z * 2.0f);
-            auto rigidbody = s.assign<Rigidbody>(15);
-            rigidbody->friction = 4.0f;
-            rigidbody->velocity = transform.front() * 15.0f;
+
+            if (spawner.isStatic){
+                s.assign<Rigidbody>(0, 0, 0, 0.4, Rigidbody::Mode::STATIC);
+            }
+            else {
+                auto rigidbody = s.assign<Rigidbody>();
+                rigidbody->mode = Rigidbody::Mode::DYNAMIC;
+                rigidbody->velocity = transform.front() * 15.0f;
+                rigidbody->friction = 0.4f;
+            }
+
+
             s.assign<Collider>(std::make_shared<BoxCollider>(box->radius));
         }
     });

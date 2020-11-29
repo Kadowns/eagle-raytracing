@@ -6,6 +6,7 @@
 #define EAGLE_SCENELAYER_H
 
 #include <eagle/engine/EngineGlobalDefinitions.h>
+#include <eagle/engine/EventMaster.h>
 
 EG_ENGINE_BEGIN
 
@@ -21,7 +22,10 @@ public:
     virtual void handle_event(Event &e) override;
 private:
     void generate_scene();
+    void generate_playground();
     glm::vec2 random_inside_unit_circle();
+private:
+    std::function<void(const OnSceneRecreate&)> m_sceneRecreateCallback;
 };
 
 EG_ENGINE_END

@@ -41,17 +41,10 @@ struct RaytracerData {
     std::array<BoxData, MAX_SPHERES> boxesData;
     Handle<UniformBuffer> uniformBuffer;
     struct {
-        Handle<Texture> color, depth, skybox;
+        Handle<Texture> color, skybox;
         Handle<ComputeShader> shader;
         Handle<StorageBuffer> spheresBuffer, boxesBuffer;
     } compute;
-
-    struct {
-        Handle<RenderPass> renderPass;
-        Handle<Framebuffer> framebuffer;
-        Handle<Shader> shader;
-        Handle<VertexBuffer> vertexBuffer;
-    } offlineRenderpass;
 
     struct{
         Handle<Shader> shader;

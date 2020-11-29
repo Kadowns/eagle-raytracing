@@ -51,6 +51,12 @@ void CollisionSystem::initialize_entity_collider(entityx::Entity e) {
             continue;
         }
 
+        auto rbB = eB.component<Rigidbody>();
+        if (rbA->mode == Rigidbody::Mode::STATIC && rbB->mode == Rigidbody::Mode::STATIC){
+            continue;
+        }
+
+
         settings.collisions.emplace_back(e, eB);
     }
     settings.velocities.clear();

@@ -2,6 +2,7 @@
 // Created by Novak on 18/06/2019.
 //
 #include <eagle/Eagle.h>
+#include "test/TestLayer.h"
 
 Eagle::ApplicationCreateInfo create_application_info() {
     Eagle::ApplicationCreateInfo config = {};
@@ -11,7 +12,8 @@ Eagle::ApplicationCreateInfo create_application_info() {
     config.layers.push_back(std::make_shared<Eagle::Editor::EditorLayer>());
     config.layers.push_back(std::make_shared<Eagle::Engine::RenderLayer>());
     config.layers.push_back(std::make_shared<Eagle::InputLayer>());
-    config.coreLogLevel = Eagle::Log::WARN;
+//    config.layers.emplace_back(std::make_shared<TestLayer>());
+    config.coreLogLevel = Eagle::Log::INFO;
     config.clientLogLevel = Eagle::Log::TRACE;
     return config;
 }

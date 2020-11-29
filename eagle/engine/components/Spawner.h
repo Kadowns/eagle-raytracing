@@ -12,6 +12,7 @@ EG_ENGINE_BEGIN
 struct Spawner {
     glm::vec3 rotation;
     glm::vec3 radius = glm::vec3(1);
+    bool isStatic;
 };
 
 EG_ENGINE_END
